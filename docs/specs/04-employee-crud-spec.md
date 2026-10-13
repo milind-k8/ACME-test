@@ -33,17 +33,17 @@ HR adds a new hire, corrects or updates an employee (most often their salary), a
 - [x] The search index follows a changed name
 
 ## Slice 3: HR removes someone who has left
-- [ ] `DELETE /api/employees/:id` returns `204` and the employee no longer appears in the list or search
-- [ ] An unknown `id` returns `404`
-- [ ] Each row has a "Delete" action that opens a confirmation naming the employee ("Delete Priya Sharma (E00042)?")
-- [ ] Confirming shows "Employee deleted" and removes the row; cancelling changes nothing
-- [ ] Deleting the last employee on a page goes back one page
+- [x] `DELETE /api/employees/:id` returns `204` and the employee no longer appears in the list or search
+- [x] An unknown `id` returns `404`
+- [x] Each row has a "Delete" action that opens a confirmation naming the employee ("Delete Priya Sharma (E00042)?")
+- [x] Confirming shows "Employee deleted" and removes the row; cancelling changes nothing
+- [x] Deleting the last employee on a page goes back one page
 
 ## Slice 4: Choices stay in step with the data
-- [ ] `GET /api/employees/form-options` returns the departments, countries (with their usual currency), and currencies (from `fx_rates`), each sorted
-- [ ] The form's selects are filled from it
-- [ ] The database rejects an employee whose department isn't in the fixed list, even if validation is skipped
-- [ ] After a create or edit adds a new job title, the list's filter options include it
+- [x] `GET /api/employees/form-options` returns the departments, countries (with their usual currency), and currencies (from `fx_rates`), each sorted
+- [x] The form's selects are filled from it
+- [x] The database rejects an employee whose department isn't in the fixed list, even if validation is skipped
+- [x] After a create or edit adds a new job title, the list's filter options include it
 
 ## API shape (indicative)
 ```

@@ -14,6 +14,8 @@ type Named = { firstName: string; lastName: string };
 export const ROW_ACTIONS = {
   editLabel: "Edit",
   edit: (e: Named) => `Edit ${e.firstName} ${e.lastName}`,
+  deleteLabel: "Delete",
+  delete: (e: Named) => `Delete ${e.firstName} ${e.lastName}`,
 } as const;
 
 export const EMPLOYEE_COPY = {
@@ -25,6 +27,7 @@ export const EMPLOYEE_COPY = {
   clearFilters: "Clear filters",
   added: "Employee added",
   updated: "Employee updated",
+  deleted: "Employee deleted",
 } as const;
 
 export const PAGINATION_COPY = {
@@ -56,4 +59,12 @@ export const FORM_COPY = {
   choose: "Choose…",
   cancel: "Cancel",
   save: "Save",
+} as const;
+
+export const DELETE_COPY = {
+  title: (e: { firstName: string; lastName: string; employeeNumber: string }) =>
+    `Delete ${e.firstName} ${e.lastName} (${e.employeeNumber})?`,
+  description: "This removes them from the list for good. It can't be undone.",
+  cancel: "Cancel",
+  confirm: "Delete",
 } as const;

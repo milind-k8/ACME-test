@@ -13,10 +13,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Toast } from "@/components/Toast";
 import { ApiError } from "@/lib/api";
 import { useQueryParams } from "@/lib/router";
+import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
 import { EmployeeFilters, type FilterName } from "./EmployeeFilters";
 import { EmployeeFormDialog } from "./EmployeeFormDialog";
 import { EmployeeTable } from "./EmployeeTable";
-import { createEmployee, getFilterOptions, getFormOptions, listEmployees, updateEmployee } from "./employees.api";
+import {
+  createEmployee,
+  deleteEmployee,
+  getFilterOptions,
+  getFormOptions,
+  listEmployees,
+  updateEmployee,
+} from "./employees.api";
 import { EMPLOYEE_COPY, FORM_COPY } from "./employees.constants";
 import { Pagination } from "./Pagination";
 
@@ -34,6 +42,7 @@ export function EmployeesPage() {
   const [formOptions, setFormOptions] = useState<EmployeeFormOptions | null>(null);
   // The open form: a new hire, or the employee being edited.
   const [form, setForm] = useState<{ employee?: Employee } | null>(null);
+  const [deleting, setDeleting] = useState<Employee | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => {
     setToast(null);
@@ -88,6 +97,20 @@ export function EmployeesPage() {
     setForm(null);
     setToast(editing ? EMPLOYEE_COPY.updated : EMPLOYEE_COPY.added);
     setReloads((n) => n + 1);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    await deleteEmployee(deleting.id);
+    setDeleting(null);
+    setToast(EMPLOYEE_COPY.deleted);
+    // The last row on a page beyond the first leaves that page empty, so step back one.
+    const current = state.status === "ready" ? state.page : null;
+    if (current && current.items.length === 1 && current.page > 1) {
+      setParams({ page: current.page > 2 ? String(current.page - 1) : undefined });
+    } else {
+      setReloads((n) => n + 1);
+    }
   };
 
   // Keep the box in step when the URL changes from elsewhere (Back, Clear filters).
@@ -154,6 +177,15 @@ export function EmployeesPage() {
           onSubmit={saveEmployee}
         />
       )}
+      <DeleteEmployeeDialog
+        // Keyed by employee, so a new delete starts without the last one's error.
+        key={deleting?.id ?? "none"}
+        employee={deleting}
+        onConfirm={confirmDelete}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+      />
       {toast && <Toast message={toast} onDone={hideToast} />}
       {options && (
         <EmployeeFilters
@@ -208,6 +240,7 @@ export function EmployeesPage() {
               onEdit={(employee) => {
                 setForm({ employee });
               }}
+              onDelete={setDeleting}
             />
             <Pagination
               page={state.page.page}

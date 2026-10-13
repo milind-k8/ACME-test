@@ -20,7 +20,7 @@ const noop = () => undefined;
 describe("EmployeeTable", () => {
   it("asks to sort by a column when its header is clicked", () => {
     const onSort = mock();
-    render(<EmployeeTable employees={[]} sort="name" order="asc" onSort={onSort} onEdit={noop} />);
+    render(<EmployeeTable employees={[]} sort="name" order="asc" onSort={onSort} onEdit={noop} onDelete={noop} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Hired/ }));
 
@@ -28,7 +28,16 @@ describe("EmployeeTable", () => {
   });
 
   it("marks the sorted column and its direction for assistive tech", () => {
-    render(<EmployeeTable employees={[]} sort="salary" order="desc" onSort={() => undefined} onEdit={noop} />);
+    render(
+      <EmployeeTable
+        employees={[]}
+        sort="salary"
+        order="desc"
+        onSort={() => undefined}
+        onEdit={noop}
+        onDelete={noop}
+      />,
+    );
 
     const salary = screen.getByRole("columnheader", { name: /Salary/ });
     expect(salary.getAttribute("aria-sort")).toBe("descending");
@@ -36,17 +45,30 @@ describe("EmployeeTable", () => {
   });
 
   it("says the salary column sorts in USD", () => {
-    render(<EmployeeTable employees={[]} sort="name" order="asc" onSort={() => undefined} onEdit={noop} />);
+    render(
+      <EmployeeTable employees={[]} sort="name" order="asc" onSort={() => undefined} onEdit={noop} onDelete={noop} />,
+    );
 
     expect(screen.getByRole("button", { name: /Salary/ }).textContent).toContain("Salary · sorted in USD");
   });
 
   it("offers an Edit action on each row, named for the employee", () => {
     const onEdit = mock();
-    render(<EmployeeTable employees={[priya]} sort="name" order="asc" onSort={noop} onEdit={onEdit} />);
+    render(<EmployeeTable employees={[priya]} sort="name" order="asc" onSort={noop} onEdit={onEdit} onDelete={noop} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit Priya Sharma" }));
 
     expect(onEdit).toHaveBeenCalledWith(priya);
+  });
+
+  it("offers a Delete action on each row, named for the employee", () => {
+    const onDelete = mock();
+    render(
+      <EmployeeTable employees={[priya]} sort="name" order="asc" onSort={noop} onEdit={noop} onDelete={onDelete} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Priya Sharma" }));
+
+    expect(onDelete).toHaveBeenCalledWith(priya);
   });
 });

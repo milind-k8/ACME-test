@@ -14,9 +14,10 @@ interface EmployeeTableProps {
   order: SortOrder;
   onSort: (sort: EmployeeSort) => void;
   onEdit: (employee: Employee) => void;
+  onDelete: (employee: Employee) => void;
 }
 
-export function EmployeeTable({ employees, sort, order, onSort, onEdit }: EmployeeTableProps) {
+export function EmployeeTable({ employees, sort, order, onSort, onEdit, onDelete }: EmployeeTableProps) {
   const sortable = (column: EmployeeSort, label: string, className?: string) => (
     <TableHead
       className={cn(HEAD, className)}
@@ -65,7 +66,7 @@ export function EmployeeTable({ employees, sort, order, onSort, onEdit }: Employ
             <TableCell>{formatCountry(e.country)}</TableCell>
             <TableCell className="text-right tabular-nums">{formatMoney(e.salaryMinor, e.currency)}</TableCell>
             <TableCell className="tabular-nums">{e.hiredAt}</TableCell>
-            <TableCell className="text-right">
+            <TableCell className="text-right whitespace-nowrap">
               <Button
                 variant="ghost"
                 size="sm"
@@ -75,6 +76,17 @@ export function EmployeeTable({ employees, sort, order, onSort, onEdit }: Employ
                 }}
               >
                 {ROW_ACTIONS.editLabel}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={ROW_ACTIONS.delete(e)}
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  onDelete(e);
+                }}
+              >
+                {ROW_ACTIONS.deleteLabel}
               </Button>
             </TableCell>
           </TableRow>

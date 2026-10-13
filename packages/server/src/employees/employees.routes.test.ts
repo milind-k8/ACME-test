@@ -317,6 +317,13 @@ describe("POST /api/employees", () => {
   it("returns 401 without a session", async () => {
     expect((await post(input, "")).status).toBe(401);
   });
+
+  it("adds a new job title to the filter options", async () => {
+    await post({ ...input, jobTitle: "Chief Happiness Officer" });
+
+    const res = await fetch(`${server.url}/api/employees/filters`, { headers: { Cookie: server.loginCookie } });
+    expect(((await res.json()) as EmployeeFilterOptions).jobTitles).toContain("Chief Happiness Officer");
+  });
 });
 
 describe("GET /api/employees/form-options", () => {
@@ -395,5 +402,37 @@ describe("PUT /api/employees/:id", () => {
 
   it("returns 401 without a session", async () => {
     expect((await put(original.id, input, "")).status).toBe(401);
+  });
+});
+
+describe("DELETE /api/employees/:id", () => {
+  const target = stored[0] as Employee;
+  const del = (id: string | number, cookie = server.loginCookie) =>
+    fetch(`${server.url}/api/employees/${String(id)}`, { method: "DELETE", headers: { Cookie: cookie } });
+
+  it("removes the employee from the list and from search", async () => {
+    const res = await del(target.id);
+
+    expect(res.status).toBe(204);
+    const all = (await (await getEmployees("?pageSize=100")).json()) as Page<Employee>;
+    expect(all.total).toBe(199);
+    const found = (await (
+      await getEmployees(`?q=${encodeURIComponent(target.lastName)}&pageSize=100`)
+    ).json()) as Page<Employee>;
+    expect(found.items.map((e) => e.id)).not.toContain(target.id);
+  });
+
+  it.each(["99999", "abc"])("returns 404 for id %p", async (id) => {
+    expect((await del(id)).status).toBe(404);
+  });
+
+  it("returns 404 the second time", async () => {
+    await del(target.id);
+
+    expect((await del(target.id)).status).toBe(404);
+  });
+
+  it("returns 401 without a session", async () => {
+    expect((await del(target.id, "")).status).toBe(401);
   });
 });

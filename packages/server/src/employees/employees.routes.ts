@@ -8,6 +8,7 @@ import { withAuth } from "../http/with-auth";
 import { EMPLOYEE_MESSAGES } from "./employees.constants";
 import {
   createEmployee,
+  deleteEmployee,
   getReferenceData,
   listEmployees,
   listFilterOptions,
@@ -58,6 +59,11 @@ export function employeeRoutes(db: Database, config: Config, now: () => Date) {
         if (!result.ok) return error(400, ERROR_CODES.validation, EMPLOYEE_MESSAGES.invalidEmployee, result.errors);
         const updated = updateEmployee(db, id, result.value);
         return updated ? json(updated) : notFound();
+      }),
+      DELETE: withAuth(config, now, (req: BunRequest<typeof API_ROUTES.employee>) => {
+        const id = parseId(req.params.id);
+        if (id === null || !deleteEmployee(db, id)) return notFound();
+        return new Response(null, { status: 204 });
       }),
     },
     [API_ROUTES.employeeFormOptions]: {

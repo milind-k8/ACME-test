@@ -31,6 +31,7 @@ void mock.module("./features/employees/employees.api", () => ({
   getFormOptions,
   createEmployee,
   updateEmployee: createEmployee,
+  deleteEmployee: mock(() => Promise.resolve()),
 }));
 const { App } = await import("./App");
 

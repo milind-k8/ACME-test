@@ -188,3 +188,8 @@ export function updateEmployee(db: Database, id: number, input: Omit<NewEmployee
     );
   return changes === 0 ? null : getEmployee(db, id);
 }
+
+/** Removes the row (no soft delete). Returns false if there's no such id. */
+export function deleteEmployee(db: Database, id: number): boolean {
+  return db.query("DELETE FROM employees WHERE id = ?").run(id).changes > 0;
+}

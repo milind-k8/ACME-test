@@ -22,3 +22,7 @@ export function createEmployee(input: EmployeeInput): Promise<Employee> {
 export function updateEmployee(id: number, input: EmployeeInput): Promise<Employee> {
   return api<Employee>(employeePath(id), { method: "PUT", body: JSON.stringify(input) });
 }
+
+export function deleteEmployee(id: number): Promise<void> {
+  return api<undefined>(employeePath(id), { method: "DELETE" });
+}

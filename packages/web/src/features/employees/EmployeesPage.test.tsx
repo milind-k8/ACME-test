@@ -26,6 +26,7 @@ const getFormOptions = mock<() => Promise<EmployeeFormOptions>>(() =>
   Promise.resolve({ departments: ["Data"], countries: [{ code: "IN", currency: "INR" }], currencies: ["INR"] }),
 );
 const createEmployee = mock<(input: EmployeeInput) => Promise<Employee>>(() => Promise.resolve(priya));
+const deleteEmployee = mock<(id: number) => Promise<void>>(() => Promise.resolve());
 const updateEmployee = mock<(id: number, input: EmployeeInput) => Promise<Employee>>(() => Promise.resolve(priya));
 void mock.module("./employees.api", () => ({
   listEmployees,
@@ -33,6 +34,7 @@ void mock.module("./employees.api", () => ({
   getFormOptions,
   createEmployee,
   updateEmployee,
+  deleteEmployee,
 }));
 const { EmployeesPage } = await import("./EmployeesPage");
 
@@ -262,5 +264,37 @@ describe("EmployeesPage", () => {
       1,
       expect.objectContaining({ jobTitle: "Staff Engineer", salary: "3000000.00" }),
     );
+  });
+
+  it("deletes an employee after confirmation and reloads the list", async () => {
+    render(<EmployeesPage />);
+    await screen.findByRole("row", { name: /E00001/ });
+    const listCalls = listEmployees.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Priya Sharma" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Employee deleted")).toBeTruthy();
+    expect(deleteEmployee).toHaveBeenCalledWith(1);
+    expect(listEmployees.mock.calls.length).toBeGreaterThan(listCalls);
+  });
+
+  it("goes back a page after deleting the only employee on the last page", async () => {
+    window.history.replaceState(null, "", "/?page=3");
+    listEmployees.mockImplementation((params) =>
+      Promise.resolve(
+        params.get("page") === "3"
+          ? { items: [priya], total: 101, page: 3, pageSize: 50 }
+          : { items: [priya], total: 100, page: 2, pageSize: 50 },
+      ),
+    );
+    render(<EmployeesPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete Priya Sharma" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("?page=2");
+    });
   });
 });
