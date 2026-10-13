@@ -122,3 +122,15 @@ describe("GET /api/me", () => {
     expect(await res.json()).toEqual(unauthenticated);
   });
 });
+
+describe("POST /api/logout", () => {
+  it("returns 204 and expires the session cookie", async () => {
+    const res = await fetch(`${server.url}/api/logout`, { method: "POST", headers: { Cookie: server.loginCookie } });
+
+    expect(res.status).toBe(204);
+    const cookie = res.headers.get("set-cookie") ?? "";
+    expect(cookie).toStartWith("session=;");
+    const attributes = cookie.split(";").slice(1).map((a) => a.trim().toLowerCase()).sort();
+    expect(attributes).toEqual(["httponly", "max-age=0", "path=/", "samesite=strict", "secure"]);
+  });
+});
