@@ -3,6 +3,7 @@ import type { BunRequest } from "bun";
 import type { SessionUser } from "@smt/shared/api-types";
 import type { Config } from "../config";
 import { error, json } from "../http/responses";
+import { withAuth } from "../http/with-auth";
 import { SESSION_SECONDS, signToken } from "./token";
 import { findByEmail } from "./users.repository";
 import { validateLogin } from "./validate-login";
@@ -37,6 +38,9 @@ export function authRoutes(db: Database, config: Config, now: () => Date) {
         });
         return json(session);
       },
+    },
+    "/api/me": {
+      GET: withAuth(config, now, (_req, user) => json(user)),
     },
   };
 }
