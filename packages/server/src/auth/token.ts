@@ -1,7 +1,6 @@
 import type { SessionUser } from "@smt/shared/api-types";
 import { errors, jwtVerify, SignJWT } from "jose";
-
-export const SESSION_SECONDS = 8 * 60 * 60;
+import { SESSION_SECONDS } from "./auth.constants";
 
 export function signToken(user: SessionUser, secret: string, now: Date): Promise<string> {
   return new SignJWT({ email: user.email })

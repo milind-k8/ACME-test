@@ -1,51 +1,54 @@
 import type { Database } from "bun:sqlite";
 import type { BunRequest } from "bun";
+import { API_ROUTES } from "@smt/shared/api-routes";
 import type { SessionUser } from "@smt/shared/api-types";
+import { ERROR_CODES } from "@smt/shared/error-codes";
 import type { Config } from "../config";
 import { error, json } from "../http/responses";
 import { withAuth } from "../http/with-auth";
-import { SESSION_SECONDS, signToken } from "./token";
+import {
+  AUTH_MESSAGES,
+  DUMMY_PASSWORD_HASH,
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  SESSION_SECONDS,
+} from "./auth.constants";
+import { signToken } from "./token";
 import { findByEmail } from "./users.repository";
 import { validateLogin } from "./validate-login";
 
-// Verified when the email is unknown, so that path costs the same as a wrong password (no user enumeration by timing).
-const DUMMY_HASH =
-  "$argon2id$v=19$m=65536,t=2,p=1$wdGgjEgwOqxF03MG4Hh10BtDcNianr6dGXviUYG5rVM$NyO8mAZyhUCR9tlBfnT0r9VP8J3Yh4tbwHDnizhBXZo";
-
-const SESSION_COOKIE = { httpOnly: true, secure: true, sameSite: "strict", path: "/" } as const;
-
 export function authRoutes(db: Database, config: Config, now: () => Date) {
   return {
-    "/api/login": {
+    [API_ROUTES.login]: {
       POST: async (req: BunRequest) => {
         // Malformed JSON is a client error: treat it as an empty body so validation reports each field.
         const body: unknown = await req.json().catch(() => null);
         const result = validateLogin(body);
         if (!result.ok) {
-          return error(400, "validation", "Invalid login request", result.errors);
+          return error(400, ERROR_CODES.validation, AUTH_MESSAGES.invalidLoginRequest, result.errors);
         }
         const { email, password } = result.value;
         const user = findByEmail(db, email);
-        const passwordMatches = await Bun.password.verify(password, user?.passwordHash ?? DUMMY_HASH);
+        const passwordMatches = await Bun.password.verify(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
         if (!user || !passwordMatches) {
-          return error(401, "invalid_credentials", "Email or password is incorrect");
+          return error(401, ERROR_CODES.invalidCredentials, AUTH_MESSAGES.invalidCredentials);
         }
         const session: SessionUser = { email: user.email };
-        req.cookies.set("session", await signToken(session, config.jwtSecret, now()), {
-          ...SESSION_COOKIE,
+        req.cookies.set(SESSION_COOKIE_NAME, await signToken(session, config.jwtSecret, now()), {
+          ...SESSION_COOKIE_OPTIONS,
           maxAge: SESSION_SECONDS,
         });
         return json(session);
       },
     },
     // Not behind withAuth: an expired session must still be able to clear its cookie.
-    "/api/logout": {
+    [API_ROUTES.logout]: {
       POST: (req: BunRequest) => {
-        req.cookies.set("session", "", { ...SESSION_COOKIE, maxAge: 0 });
+        req.cookies.set(SESSION_COOKIE_NAME, "", { ...SESSION_COOKIE_OPTIONS, maxAge: 0 });
         return new Response(null, { status: 204 });
       },
     },
-    "/api/me": {
+    [API_ROUTES.me]: {
       GET: withAuth(config, now, (_req, user) => json(user)),
     },
   };
