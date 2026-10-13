@@ -32,6 +32,15 @@ describe("generateEmployees", () => {
     expect(invalid).toEqual([]);
   });
 
+  it("gives every employee a different full name", () => {
+    const names = employees.map((e) => `${e.firstName} ${e.lastName}`);
+    expect(new Set(names).size).toBe(employees.length);
+  });
+
+  it("fails loudly instead of looping when asked for more people than there are distinct names", () => {
+    expect(() => generateEmployees(13_000, 42)).toThrow("Not enough distinct names");
+  });
+
   it("hires everyone on a real date between 2010-01-01 and 2026-09-30", () => {
     const isRealDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && new Date(d).toISOString().startsWith(d);
     const invalid = employees.filter(
