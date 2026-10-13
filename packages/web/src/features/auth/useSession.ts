@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SessionUser } from "@smt/shared/api-types";
-import { ApiError } from "@/lib/api";
-import { getMe } from "./auth.api";
+import { ApiError, onUnauthorized } from "@/lib/api";
+import { getMe, logout } from "./auth.api";
 
 export type Session =
   | { status: "loading" }
@@ -22,10 +22,22 @@ export function useSession() {
       });
   }, []);
 
+  useEffect(
+    () =>
+      onUnauthorized(() => {
+        setSession({ status: "anonymous" });
+      }),
+    [],
+  );
+
   return {
     session,
     setUser: (user: SessionUser) => {
       setSession({ status: "authenticated", user });
+    },
+    logout: async () => {
+      await logout();
+      setSession({ status: "anonymous" });
     },
   };
 }

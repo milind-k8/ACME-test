@@ -8,3 +8,7 @@ export function login(request: LoginRequest): Promise<SessionUser> {
 export function getMe(): Promise<SessionUser> {
   return api<SessionUser>("/api/me");
 }
+
+export function logout(): Promise<void> {
+  return api<undefined>("/api/logout", { method: "POST" });
+}
