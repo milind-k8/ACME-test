@@ -3,19 +3,20 @@ import {
   EMPLOYEE_SORTS,
   type Employee,
   type EmployeeFilterOptions,
+  type EmployeeFilter,
   type EmployeeFormOptions,
   type EmployeeInput,
   type EmployeeSort,
   type Page,
 } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
+import { FilterBar } from "@/components/FilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { Toast } from "@/components/Toast";
 import { ApiError } from "@/lib/api";
 import { useQueryParams } from "@/lib/router";
 import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
-import { EmployeeFilters, type FilterName } from "./EmployeeFilters";
 import { EmployeeFormDialog } from "./EmployeeFormDialog";
 import { EmployeeTable } from "./EmployeeTable";
 import {
@@ -31,7 +32,7 @@ import { Pagination } from "./Pagination";
 
 const SKELETON_ROWS = 8;
 const SEARCH_DEBOUNCE_MS = 250;
-const FILTER_NAMES: FilterName[] = ["country", "department", "jobTitle"];
+const FILTER_NAMES: EmployeeFilter[] = ["country", "department", "jobTitle"];
 
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; page: Page<Employee> };
 
@@ -132,7 +133,7 @@ export function EmployeesPage() {
 
   const filters = Object.fromEntries(FILTER_NAMES.map((name) => [name, params.get(name) ?? undefined]));
   // Any filter change starts again from page 1.
-  const setFilter = (name: FilterName, value: string | undefined) => {
+  const setFilter = (name: EmployeeFilter, value: string | undefined) => {
     setParams({ [name]: value, page: undefined });
   };
   // Without an explicit sort the server orders a search by best match, so no column is marked then.
@@ -190,13 +191,7 @@ export function EmployeesPage() {
       />
       {toast && <Toast message={toast} onDone={hideToast} />}
       {options && (
-        <EmployeeFilters
-          options={options}
-          value={filters}
-          onChange={setFilter}
-          search={search}
-          onSearchChange={setSearch}
-        />
+        <FilterBar options={options} value={filters} onChange={setFilter} search={search} onSearchChange={setSearch} />
       )}
       {state.status === "loading" && (
         <div role="status" aria-label={EMPLOYEE_COPY.loading} className="flex flex-col gap-3">

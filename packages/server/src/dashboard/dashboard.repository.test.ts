@@ -3,6 +3,8 @@ import type { Database } from "bun:sqlite";
 import type { NewEmployee } from "@smt/shared/api-types";
 import { openDatabase } from "../db/connection";
 import { replaceAllEmployees } from "../employees/employees.repository";
+import { generateEmployees } from "../seed/generate-employees";
+import { fullScans, queryPlans } from "../test-support/query-plans";
 import { fxAsOf, listPay } from "./dashboard.repository";
 
 let db: Database;
@@ -30,7 +32,7 @@ beforeEach(() => {
 
 describe("listPay", () => {
   it("converts each salary to USD cents with the snapshot rate and sorts by it", () => {
-    expect(listPay(db).map((r) => [r.country, r.usdCents])).toEqual([
+    expect(listPay(db, {}).map((r) => [r.country, r.usdCents])).toEqual([
       ["IN", 3_600_000],
       ["JP", 4_355_000],
       ["US", 15_000_000],
@@ -38,7 +40,7 @@ describe("listPay", () => {
   });
 
   it("returns the fields the dashboard groups by", () => {
-    expect(listPay(db)[0]).toEqual({
+    expect(listPay(db, {})[0]).toEqual({
       country: "IN",
       department: "Engineering",
       jobTitle: "Software Engineer",
@@ -52,4 +54,19 @@ describe("fxAsOf", () => {
   it("is the snapshot date", () => {
     expect(fxAsOf(db)).toBe("2026-10-01");
   });
+});
+
+describe("listPay query plan", () => {
+  it.each([{ country: "IN" }, { department: "Engineering" }, { jobTitle: "Data Analyst" }])(
+    "uses an index to filter by %o",
+    (filter) => {
+      replaceAllEmployees(db, generateEmployees(1_000, 42));
+      db.run("ANALYZE");
+
+      const plans = queryPlans(db, (recording) => listPay(recording, filter));
+
+      expect(plans.length).toBeGreaterThan(0);
+      expect(fullScans(plans)).toEqual([]);
+    },
+  );
 });

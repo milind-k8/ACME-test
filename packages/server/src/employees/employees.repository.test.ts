@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import type { NewEmployee } from "@smt/shared/api-types";
 import type { Database } from "bun:sqlite";
 import { openDatabase } from "../db/connection";
+import { fullScans, queryPlans } from "../test-support/query-plans";
 import { generateEmployees } from "../seed/generate-employees";
 import { createEmployee, getReferenceData, listEmployees, replaceAllEmployees } from "./employees.repository";
 import { SEED_COUNTRIES, SEED_JOBS } from "../seed/data";
-import type { EmployeeListQuery } from "./validate-list-query";
 
 let db: Database;
 
@@ -71,30 +71,6 @@ describe("employees table", () => {
   });
 });
 
-// Records the SQL listEmployees runs, then asks SQLite how it would run each statement with those same parameters.
-function queryPlans(query: EmployeeListQuery): string[] {
-  const statements: { sql: string; params: unknown[] }[] = [];
-  const recording = new Proxy(db, {
-    get(target, key) {
-      if (key !== "query") return Reflect.get(target, key) as unknown;
-      return (sql: string) => {
-        const statement = target.query(sql);
-        const record = (params: unknown[]) => statements.push({ sql, params });
-        return {
-          all: (...params: unknown[]) => (record(params), statement.all(...(params as []))),
-          get: (...params: unknown[]) => (record(params), statement.get(...(params as []))),
-        };
-      };
-    },
-  });
-  listEmployees(recording, query);
-  return statements.flatMap(({ sql, params }) =>
-    db
-      .query<{ detail: string }, []>(`EXPLAIN QUERY PLAN ${sql}`)
-      .all(...(params as []))
-      .map((row) => row.detail),
-  );
-}
 
 describe("listEmployees query plans", () => {
   it.each([{ country: "IN" }, { department: "Engineering" }, { jobTitle: "Data Analyst" }])(
@@ -103,11 +79,10 @@ describe("listEmployees query plans", () => {
       replaceAllEmployees(db, generateEmployees(1_000, 42));
       db.run("ANALYZE");
 
-      const plans = queryPlans({ page: 1, pageSize: 50, ...filter });
+      const plans = queryPlans(db, (recording) => listEmployees(recording, { page: 1, pageSize: 50, ...filter }));
 
       expect(plans.length).toBeGreaterThan(0);
-      // The table may appear under its alias "e"; "SCAN employees_fts" is the search index, not the table.
-      expect(plans.filter((detail) => /^SCAN (employees|e)( |$)/.test(detail))).toEqual([]);
+      expect(fullScans(plans)).toEqual([]);
     },
   );
 });

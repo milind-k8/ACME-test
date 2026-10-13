@@ -12,6 +12,8 @@ export const DASHBOARD_COPY = {
   hires: "Hires in the last 12 months",
   tenure: "Average tenure",
   years: (n: number) => `${n.toFixed(1)} years`,
+  noMatches: "No employees match these filters.",
+  clearFilters: "Clear filters",
 } as const;
 
 export const PAY_COLUMNS = {

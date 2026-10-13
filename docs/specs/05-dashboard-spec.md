@@ -39,11 +39,11 @@ The first page HR sees: the numbers they're asked for most, in USD from the date
 - [x] A column chart shows hires per month
 
 ## Slice 6: Filters
-- [ ] `?country=`, `?department=`, and `?jobTitle=` narrow every figure, table, and chart on the dashboard, and combine
-- [ ] An unknown filter value returns `200` with a headcount of 0 and empty tables, not an error
-- [ ] The page has the same three filter selects as the employee list, kept in the URL
-- [ ] With a job title chosen, the per-country table compares that title across countries
-- [ ] With no matching employees, the page says "No employees match these filters." with a "Clear filters" action
+- [x] `?country=`, `?department=`, and `?jobTitle=` narrow every figure, table, and chart on the dashboard, and combine
+- [x] An unknown filter value returns `200` with a headcount of 0 and empty tables, not an error
+- [x] The page has the same three filter selects as the employee list, kept in the URL
+- [x] With a job title chosen, the per-country table compares that title across countries
+- [x] With no matching employees, the page says "No employees match these filters." with a "Clear filters" action
 
 ## Slice 7: Cache without stale data
 - [ ] Asking for the same dashboard twice in a row doesn't run the dashboard query the second time

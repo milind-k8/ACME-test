@@ -91,9 +91,9 @@ Query design: [ADR-007](../adrs/007-dashboard-aggregation.md); caching: [ADR-008
 - **Backend:** the repository's `WHERE` uses the shared filter names and the existing indexes.
 - **Frontend:** `EmployeeFilters` moves to `components/FilterBar.tsx` (its second user, so it's shared now); the search box becomes optional. The dashboard keeps filters in the URL with `useQueryParams`; empty result → "No employees match these filters." + Clear filters.
 - **Test list:**
-  - [ ] integration `dashboard.routes`: each filter narrows the summary headcount to the matching rows · filters combine · unknown value → 200, headcount 0, empty tables
-  - [ ] integration `dashboard.repository`: `EXPLAIN QUERY PLAN` with each filter has no full scan of employees
-  - [ ] component `DashboardPage`: choosing a job title refetches with it and writes it to the URL · empty state + Clear filters
+  - [x] integration `dashboard.routes`: each filter narrows the summary headcount to the matching rows · filters combine · unknown value → 200, headcount 0, empty tables
+  - [x] integration `dashboard.repository`: `EXPLAIN QUERY PLAN` with each filter has no full scan of employees
+  - [x] component `DashboardPage`: choosing a job title refetches with it and writes it to the URL · empty state + Clear filters
 
 ## Slice 7: Cache without stale data
 

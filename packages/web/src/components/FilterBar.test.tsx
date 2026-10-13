@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { EmployeeFilterOptions } from "@smt/shared/api-types";
-import { EmployeeFilters } from "./EmployeeFilters";
+import { FilterBar } from "./FilterBar";
 
 const options: EmployeeFilterOptions = {
   countries: ["DE", "IN"],
@@ -14,12 +14,10 @@ function choose(label: string, option: string) {
   fireEvent.click(screen.getByRole("option", { name: option }));
 }
 
-describe("EmployeeFilters", () => {
+describe("FilterBar", () => {
   it("reports the chosen country as its code", () => {
     const onChange = mock();
-    render(
-      <EmployeeFilters options={options} value={{}} onChange={onChange} search="" onSearchChange={() => undefined} />,
-    );
+    render(<FilterBar options={options} value={{}} onChange={onChange} search="" onSearchChange={() => undefined} />);
 
     choose("Country", "India");
 
@@ -29,7 +27,7 @@ describe("EmployeeFilters", () => {
   it("clears a filter when All is chosen", () => {
     const onChange = mock();
     render(
-      <EmployeeFilters
+      <FilterBar
         options={options}
         value={{ department: "Sales" }}
         onChange={onChange}
@@ -45,7 +43,7 @@ describe("EmployeeFilters", () => {
 
   it("shows the current job title", () => {
     render(
-      <EmployeeFilters
+      <FilterBar
         options={options}
         value={{ jobTitle: "Data Analyst" }}
         onChange={() => undefined}

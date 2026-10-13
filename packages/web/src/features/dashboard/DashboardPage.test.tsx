@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { Dashboard } from "@smt/shared/api-types";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { Dashboard, EmployeeFilterOptions } from "@smt/shared/api-types";
 import { ApiError } from "@/lib/api";
 
 const dashboard: Dashboard = {
@@ -76,13 +76,17 @@ const dashboard: Dashboard = {
 };
 
 const getDashboard = mock<(params: URLSearchParams) => Promise<Dashboard>>(() => Promise.resolve(dashboard));
-void mock.module("./dashboard.api", () => ({ getDashboard }));
+const getFilterOptions = mock<() => Promise<EmployeeFilterOptions>>(() =>
+  Promise.resolve({ countries: ["IN", "US"], departments: ["Engineering"], jobTitles: ["Data Analyst"] }),
+);
+void mock.module("./dashboard.api", () => ({ getDashboard, getFilterOptions }));
 const { DashboardPage } = await import("./DashboardPage");
 
 // Each figure is a <dt> label followed by its <dd> value.
 const figure = (label: string) => screen.getByText(label, { selector: "dt" }).nextElementSibling?.textContent;
 
 beforeEach(() => {
+  window.history.replaceState(null, "", "/");
   getDashboard.mockClear();
   getDashboard.mockImplementation(() => Promise.resolve(dashboard));
 });
@@ -165,5 +169,42 @@ describe("DashboardPage", () => {
     const figure = await screen.findByRole("figure", { name: "Hires per month" });
     expect(figure.textContent).toContain("Nov 2025: 40");
     expect(figure.textContent).toContain("Oct 2026: 37");
+  });
+
+  it("narrows everything to the chosen job title and keeps it in the URL", async () => {
+    render(<DashboardPage />);
+
+    fireEvent.keyDown(await screen.findByRole("combobox", { name: "Job title" }), { key: "Enter" });
+    fireEvent.click(await screen.findByRole("option", { name: "Data Analyst" }));
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("?jobTitle=Data+Analyst");
+    });
+    expect(getDashboard.mock.calls.at(-1)?.[0].get("jobTitle")).toBe("Data Analyst");
+  });
+
+  it("applies filters from the URL on load", async () => {
+    window.history.replaceState(null, "", "/?country=IN");
+
+    render(<DashboardPage />);
+
+    await screen.findByText("Headcount", { selector: "dt" });
+    expect(getDashboard.mock.calls[0]?.[0].get("country")).toBe("IN");
+    expect(screen.getByRole("combobox", { name: "Country" }).textContent).toBe("India");
+  });
+
+  it("says when nothing matches and clears the filters on request", async () => {
+    window.history.replaceState(null, "", "/?country=US&jobTitle=Data+Analyst");
+    getDashboard.mockImplementationOnce(() =>
+      Promise.resolve({ ...dashboard, summary: { ...dashboard.summary, headcount: 0 }, byCountry: [] }),
+    );
+    render(<DashboardPage />);
+
+    expect(await screen.findByText("No employees match these filters.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("");
+    });
   });
 });

@@ -106,3 +106,43 @@ describe("GET /api/dashboard", () => {
     expect(body.hiresByMonth.find((m) => m.month === "2026-03")).toEqual({ month: "2026-03", hires: 1 });
   });
 });
+
+describe("GET /api/dashboard filters", () => {
+  const summaryOf = async (query: string) => ((await (await getDashboard(query)).json()) as Dashboard).summary;
+
+  beforeEach(() => {
+    replaceAllEmployees(server.db, [
+      { ...person(1, 15_000_000, "USD", "US", "2020-01-01"), department: "Engineering", jobTitle: "Data Analyst" },
+      { ...person(2, 12_000_000, "USD", "US", "2020-01-01"), department: "Sales", jobTitle: "Account Executive" },
+      { ...person(3, 300_000_000, "INR", "IN", "2020-01-01"), department: "Engineering", jobTitle: "Data Analyst" },
+    ]);
+  });
+
+  it.each([
+    ["?country=US", 2],
+    ["?department=Engineering", 2],
+    ["?jobTitle=Account%20Executive", 1],
+    ["?country=US&department=Engineering", 1],
+    ["?country=%20US%20", 2],
+    ["?country=", 3],
+  ])("%s narrows the headcount to %p", async (query, headcount) => {
+    expect((await summaryOf(query)).headcount).toBe(headcount);
+  });
+
+  it("narrows the tables and charts too", async () => {
+    const body = (await (await getDashboard("?jobTitle=Data%20Analyst")).json()) as Dashboard;
+
+    expect(body.byCountry.map((c) => c.country).sort()).toEqual(["IN", "US"]);
+    expect(body.byDepartment.map((d) => d.department)).toEqual(["Engineering"]);
+    expect(body.salaryBands.reduce((sum, b) => sum + b.headcount, 0)).toBe(2);
+  });
+
+  it("returns 200 with nothing in it for an unknown value", async () => {
+    const res = await getDashboard("?country=ZZ");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Dashboard;
+    expect(body.summary.headcount).toBe(0);
+    expect(body.byCountry).toEqual([]);
+  });
+});

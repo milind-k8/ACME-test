@@ -53,7 +53,7 @@ const getDashboard = mock(() =>
     hiresByMonth: [],
   }),
 );
-void mock.module("./features/dashboard/dashboard.api", () => ({ getDashboard }));
+void mock.module("./features/dashboard/dashboard.api", () => ({ getDashboard, getFilterOptions }));
 const { App } = await import("./App");
 
 // The email and Log out live in a menu behind the user's initial in the header.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { Dashboard, SalaryBand } from "@smt/shared/api-types";
+import { EMPLOYEE_FILTERS, type Dashboard, type EmployeeFilterOptions, type SalaryBand } from "@smt/shared/api-types";
+import { FilterBar } from "@/components/FilterBar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
@@ -8,7 +9,7 @@ import { formatCountry, formatUsd } from "@/lib/format";
 const compactUsd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact" });
 const formatUsdCompact = (cents: number) => compactUsd.format(cents / 100);
 import { useQueryParams } from "@/lib/router";
-import { getDashboard } from "./dashboard.api";
+import { getDashboard, getFilterOptions } from "./dashboard.api";
 import { CHART_COPY, DASHBOARD_COPY } from "./dashboard.constants";
 import { ColumnChart } from "./ColumnChart";
 import { HorizontalBarChart } from "./HorizontalBarChart";
@@ -41,7 +42,8 @@ const monthLabel = (month: string) => monthName.format(new Date(`${month}-01T00:
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; data: Dashboard };
 
 export function DashboardPage() {
-  const [params] = useQueryParams();
+  const [params, setParams] = useQueryParams();
+  const [options, setOptions] = useState<EmployeeFilterOptions | null>(null);
   const query = params.toString();
   const [state, setState] = useState<State>({ status: "loading" });
   const [reloads, setReloads] = useState(0);
@@ -71,6 +73,23 @@ export function DashboardPage() {
     };
   }, [query, reloads]);
 
+  useEffect(() => {
+    getFilterOptions().then(setOptions, (err: unknown) => {
+      // Without options the filter bar just stays hidden; the figures still load. Bugs still reach the boundary.
+      if (!(err instanceof ApiError)) {
+        setOptions(() => {
+          throw err;
+        });
+      }
+    });
+  }, []);
+
+  const filters = Object.fromEntries(EMPLOYEE_FILTERS.map((name) => [name, params.get(name) ?? undefined]));
+  const clearFilters = () => {
+    setParams(Object.fromEntries(EMPLOYEE_FILTERS.map((name) => [name, undefined])));
+  };
+  const hasData = state.status === "ready" && state.data.summary.headcount > 0;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
       <div>
@@ -79,6 +98,15 @@ export function DashboardPage() {
           {state.status === "ready" ? DASHBOARD_COPY.fxNote(state.data.fxAsOf) : DASHBOARD_COPY.subtitle}
         </p>
       </div>
+      {options && (
+        <FilterBar
+          options={options}
+          value={filters}
+          onChange={(name, value) => {
+            setParams({ [name]: value });
+          }}
+        />
+      )}
       {state.status === "loading" && (
         <div role="status" aria-label={DASHBOARD_COPY.loading} className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
@@ -103,7 +131,15 @@ export function DashboardPage() {
           </Button>
         </div>
       )}
-      {state.status === "ready" && (
+      {state.status === "ready" && !hasData && (
+        <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground">
+          <span>{DASHBOARD_COPY.noMatches}</span>
+          <Button variant="outline" size="sm" onClick={clearFilters}>
+            {DASHBOARD_COPY.clearFilters}
+          </Button>
+        </div>
+      )}
+      {hasData && (
         <dl className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <StatTile label={DASHBOARD_COPY.headcount} value={count.format(state.data.summary.headcount)} />
           <StatTile label={DASHBOARD_COPY.payroll} value={formatUsd(state.data.summary.payrollUsdCents)} />
@@ -113,7 +149,7 @@ export function DashboardPage() {
           <StatTile label={DASHBOARD_COPY.tenure} value={DASHBOARD_COPY.years(state.data.summary.avgTenureYears)} />
         </dl>
       )}
-      {state.status === "ready" && (
+      {hasData && (
         <>
           <section className="grid gap-4 xl:grid-cols-2">
             <ColumnChart
