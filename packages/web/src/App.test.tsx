@@ -33,6 +33,22 @@ void mock.module("./features/employees/employees.api", () => ({
   updateEmployee: createEmployee,
   deleteEmployee: mock(() => Promise.resolve()),
 }));
+const getDashboard = mock(() =>
+  Promise.resolve({
+    fxAsOf: "2026-10-01",
+    summary: {
+      headcount: 0,
+      payrollUsdCents: 0,
+      minUsdCents: 0,
+      medianUsdCents: 0,
+      avgUsdCents: 0,
+      maxUsdCents: 0,
+      hiresLast12Months: 0,
+      avgTenureYears: 0,
+    },
+  }),
+);
+void mock.module("./features/dashboard/dashboard.api", () => ({ getDashboard }));
 const { App } = await import("./App");
 
 // The email and Log out live in a menu behind the user's initial in the header.
@@ -47,6 +63,7 @@ const realFetch = globalThis.fetch;
 const loggedIn = () => Promise.resolve({ email: "hr@acme.test" });
 
 beforeEach(() => {
+  window.history.replaceState(null, "", "/");
   getMe.mockReset();
   getMe.mockImplementation(notLoggedIn);
   logout.mockClear();
@@ -77,15 +94,31 @@ describe("App", () => {
     expect(screen.queryByLabelText("Password")).toBeNull();
   });
 
-  it("shows the employee list, with Employees in the navigation, once logged in", async () => {
+  it("lands on the Dashboard, listed first in the navigation, once logged in", async () => {
     getMe.mockImplementation(loggedIn);
 
     render(<App />);
 
     const nav = await screen.findByRole("navigation");
-    expect(within(nav).getByText("Employees")).toBeDefined();
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Dashboard", "Employees"]);
+    expect(within(nav).getByRole("link", { name: "Dashboard" }).getAttribute("aria-current")).toBe("page");
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeDefined();
+  });
+
+  it("shows the employee list when Employees is chosen in the navigation", async () => {
+    getMe.mockImplementation(loggedIn);
+    render(<App />);
+
+    fireEvent.click(within(await screen.findByRole("navigation")).getByRole("link", { name: "Employees" }));
+
     expect(await screen.findByRole("table")).toBeDefined();
     expect(listEmployees).toHaveBeenCalled();
+    expect(window.location.pathname).toBe("/employees");
+    expect(screen.getByRole("link", { name: "Employees" }).getAttribute("aria-current")).toBe("page");
   });
 
   it("shows a loading placeholder while the session is being checked", () => {

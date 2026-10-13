@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { formatCountry, formatMajor, formatMoney } from "./format";
+import { formatCountry, formatMajor, formatMoney, formatUsd } from "./format";
 
 describe("formatMoney", () => {
   it.each([
@@ -25,5 +25,15 @@ describe("formatMajor", () => {
     [5, "USD", "0.05"],
   ])("shows %p minor units of %s as %p, ready to edit", (minor, currency, expected) => {
     expect(formatMajor(minor, currency)).toBe(expected);
+  });
+});
+
+describe("formatUsd", () => {
+  it.each([
+    [8_451_249, "$84,512"],
+    [8_451_250, "$84,513"],
+    [0, "$0"],
+  ])("shows %p cents as whole dollars: %p", (cents, expected) => {
+    expect(formatUsd(cents)).toBe(expected);
   });
 });

@@ -21,3 +21,10 @@ export function formatMajor(minor: number, currency: string): string {
 export function formatCountry(code: string): string {
   return countryNames.of(code) ?? code;
 }
+
+const wholeUsd = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+/** Dashboard money: USD cents shown as whole dollars ($84,512). */
+export function formatUsd(cents: number): string {
+  return wholeUsd.format(Math.round(cents / 100));
+}

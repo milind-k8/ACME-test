@@ -73,3 +73,30 @@ export interface EmployeeFormOptions {
   countries: { code: string; currency: string }[];
   currencies: string[];
 }
+
+/** USD figures are whole cents, converted with the fx_rates snapshot (ADR-002). */
+export interface PayStats {
+  headcount: number;
+  payrollUsdCents: number;
+  minUsdCents: number;
+  medianUsdCents: number;
+  avgUsdCents: number;
+  maxUsdCents: number;
+}
+
+export interface DashboardSummary extends PayStats {
+  hiresLast12Months: number;
+  /** Years since hire, averaged, one decimal */
+  avgTenureYears: number;
+}
+
+export interface Dashboard {
+  /** YYYY-MM-DD date of the FX snapshot */
+  fxAsOf: string;
+  summary: DashboardSummary;
+}
+
+/** The list and the dashboard filter on the same three fields. */
+export const EMPLOYEE_FILTERS = ["country", "department", "jobTitle"] as const;
+export type EmployeeFilter = (typeof EMPLOYEE_FILTERS)[number];
+export type EmployeeFilters = Partial<Record<EmployeeFilter, string>>;

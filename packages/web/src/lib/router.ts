@@ -13,6 +13,24 @@ function subscribe(listener: () => void) {
 }
 
 const getSearch = () => window.location.search;
+const getPath = () => window.location.pathname;
+
+function notify() {
+  listeners.forEach((listener) => {
+    listener();
+  });
+}
+
+/** The current screen's path, e.g. "/" or "/employees". */
+export function usePath(): string {
+  return useSyncExternalStore(subscribe, getPath);
+}
+
+/** Go to another screen. Its filters start fresh, so the old query string is dropped. */
+export function navigate(path: string): void {
+  window.history.pushState(null, "", path);
+  notify();
+}
 
 /** The URL query string as state. `undefined` or "" removes a key. */
 export function useQueryParams(): [URLSearchParams, (changes: Record<string, string | undefined>) => void] {
@@ -26,9 +44,7 @@ export function useQueryParams(): [URLSearchParams, (changes: Record<string, str
     }
     const query = next.toString();
     window.history.pushState(null, "", query ? `?${query}` : window.location.pathname);
-    listeners.forEach((listener) => {
-      listener();
-    });
+    notify();
   }, []);
 
   return [new URLSearchParams(search), update];

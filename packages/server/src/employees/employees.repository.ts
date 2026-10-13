@@ -1,14 +1,16 @@
 import type { Database } from "bun:sqlite";
-import type {
-  Employee,
-  EmployeeFilterOptions,
-  EmployeeFormOptions,
-  EmployeeSort,
-  NewEmployee,
-  Page,
+import {
+  EMPLOYEE_FILTERS,
+  type Employee,
+  type EmployeeFilter,
+  type EmployeeFilterOptions,
+  type EmployeeFormOptions,
+  type EmployeeSort,
+  type NewEmployee,
+  type Page,
 } from "@smt/shared/api-types";
 import { toFtsQuery } from "./to-fts-query";
-import { EMPLOYEE_FILTERS, type EmployeeFilter, type EmployeeListQuery } from "./validate-list-query";
+import type { EmployeeListQuery } from "./validate-list-query";
 
 export function replaceAllEmployees(db: Database, rows: NewEmployee[]): void {
   const insert = db.query(
