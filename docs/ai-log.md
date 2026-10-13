@@ -104,3 +104,13 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
 - **Behind the proxy:** every request reaches the API from Caddy, so keying on the connection address would put all users in one bucket. With `TRUST_PROXY=true` (Compose only) the API uses the last `X-Forwarded-For` entry, the one Caddy adds; earlier entries can be forged. Checked in Docker with spoofed headers.
 - **Built test-first** with an injected clock, so the 15-minute window is tested without waiting.
 - **AI corrections:** a formatter run touched three unrelated auth test files; it restored them so the diff only holds the change.
+
+## Original currency (2026-10-13)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** the nice-to-have "salaries in their original currency alongside the USD figure in the insight tables".
+- **Design point the AI raised:** an original-currency figure only means something when the whole row is paid in one currency, so mixed rows show USD only; filtering to one country makes department and job-title rows single-currency. Local figures come from the stored amounts, never converted back from USD (a test catches the rounding difference).
+- **I asked about live exchange rates** for a "real-time" app. The AI laid out the trade-off (salaries are annual; official rates publish daily; live numbers would shift between page loads) and proposed a daily European Central Bank refresh that the cache would pick up automatically. **I decided to keep the fixed snapshot for now.**
+- **Built test-first;** the same single query and pass as ADR-007.
+- **After the browser check** it hid the repeated line for USD rows ("$97,000" over "$97,000.00").

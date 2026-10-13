@@ -84,6 +84,19 @@ export interface PayStats {
   maxUsdCents: number;
 }
 
+/** A group's pay in the one currency all its employees are paid in, from the stored amounts (no FX). */
+export interface LocalPay {
+  currency: string;
+  payrollMinor: number;
+  minMinor: number;
+  medianMinor: number;
+  avgMinor: number;
+  maxMinor: number;
+}
+
+/** A dashboard table row: USD stats, plus local-currency ones when the whole group is paid in one currency. */
+export type GroupPay<K extends string> = PayStats & Record<K, string> & { local: LocalPay | null };
+
 export interface DashboardSummary extends PayStats {
   hiresLast12Months: number;
   /** Years since hire, averaged, one decimal */
@@ -107,9 +120,9 @@ export interface Dashboard {
   /** YYYY-MM-DD date of the FX snapshot */
   fxAsOf: string;
   summary: DashboardSummary;
-  byCountry: (PayStats & { country: string })[];
-  byDepartment: (PayStats & { department: string })[];
-  byJobTitle: (PayStats & { jobTitle: string })[];
+  byCountry: GroupPay<"country">[];
+  byDepartment: GroupPay<"department">[];
+  byJobTitle: GroupPay<"jobTitle">[];
   salaryBands: SalaryBand[];
   hiresByMonth: MonthlyHires[];
 }

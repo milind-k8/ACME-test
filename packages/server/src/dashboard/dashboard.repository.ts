@@ -27,7 +27,8 @@ export function listPay(db: Database, filters: EmployeeFilters = {}): PayRow[] {
   return db
     .query<PayRow, string[]>(
       `SELECT e.country, e.department, e.job_title AS jobTitle,
-              CAST(round(e.salary_minor * fx.usd_cents_per_minor) AS INTEGER) AS usdCents, e.hired_at AS hiredAt
+              CAST(round(e.salary_minor * fx.usd_cents_per_minor) AS INTEGER) AS usdCents,
+              e.salary_minor AS salaryMinor, e.currency, e.hired_at AS hiredAt
        FROM employees e
        JOIN fx_rates fx ON fx.currency = e.currency
        ${where}
