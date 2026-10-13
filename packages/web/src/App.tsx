@@ -1,9 +1,17 @@
-import { useState } from "react";
-import type { SessionUser } from "@smt/shared/api-types";
 import { AppShell } from "@/components/AppShell";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LoginPage } from "@/features/auth/LoginPage";
+import { useSession } from "@/features/auth/useSession";
 
 export function App() {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  return user ? <AppShell user={user} /> : <LoginPage onLoggedIn={setUser} />;
+  const { session, setUser } = useSession();
+  if (session.status === "authenticated") return <AppShell user={session.user} />;
+  if (session.status === "anonymous") return <LoginPage onLoggedIn={setUser} />;
+  return (
+    <div role="status" aria-label="Loading" className="flex flex-col gap-3 p-6">
+      <Skeleton className="h-8 w-64" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>
+  );
 }
