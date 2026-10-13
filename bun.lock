@@ -14,6 +14,12 @@
     },
     "packages/server": {
       "name": "@smt/server",
+      "dependencies": {
+        "@smt/shared": "workspace:*",
+      },
+    },
+    "packages/shared": {
+      "name": "@smt/shared",
     },
     "packages/web": {
       "name": "@smt/web",
@@ -98,6 +104,8 @@
     "@oven/bun-windows-x64": ["@oven/bun-windows-x64@1.4.3", "", { "os": "win32", "cpu": "x64" }, "sha512-9pV16qXHTFvZDH61S8hpdpVBbWmvEqekczLF54zTnQHKP28D6yRCNLrD/7jVbXYR61fQYAx4FSBgzCxGCKb3rQ=="],
 
     "@smt/server": ["@smt/server@workspace:packages/server"],
+
+    "@smt/shared": ["@smt/shared@workspace:packages/shared"],
 
     "@smt/web": ["@smt/web@workspace:packages/web"],
 
