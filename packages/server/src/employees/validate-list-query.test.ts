@@ -33,4 +33,22 @@ describe("validateListQuery", () => {
   it.each(["0", "1.5", "abc", "", "-1", "1e3"])("rejects page=%p", (page) => {
     expect(validate(`page=${page}`)).toEqual({ ok: false, errors: { page: "must be a whole number of 1 or more" } });
   });
+
+  it("reads sort and order", () => {
+    expect(validate("sort=salary&order=desc")).toEqual({
+      ok: true,
+      value: { page: 1, pageSize: 50, sort: "salary", order: "desc" },
+    });
+  });
+
+  it("rejects an unknown sort", () => {
+    expect(validate("sort=password")).toEqual({
+      ok: false,
+      errors: { sort: "must be one of name, salary, hiredAt, country" },
+    });
+  });
+
+  it("rejects an unknown order", () => {
+    expect(validate("order=up")).toEqual({ ok: false, errors: { order: "must be asc or desc" } });
+  });
 });

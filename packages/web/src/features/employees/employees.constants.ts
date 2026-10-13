@@ -5,7 +5,7 @@ export const EMPLOYEE_COLUMNS = {
   jobTitle: "Job title",
   department: "Department",
   country: "Country",
-  salary: "Salary",
+  salary: "Salary · sorted in USD",
   hiredAt: "Hired",
 } as const;
 

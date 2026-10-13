@@ -1,5 +1,5 @@
 import type { Database } from "bun:sqlite";
-import type { Employee, EmployeeFilterOptions, NewEmployee, Page } from "@smt/shared/api-types";
+import type { Employee, EmployeeFilterOptions, EmployeeSort, NewEmployee, Page } from "@smt/shared/api-types";
 import { toFtsQuery } from "./to-fts-query";
 import { EMPLOYEE_FILTERS, type EmployeeFilter, type EmployeeListQuery } from "./validate-list-query";
 
@@ -34,6 +34,23 @@ const FILTER_COLUMNS: Record<EmployeeFilter, string> = {
   jobTitle: "job_title",
 };
 
+// ORDER BY expressions come only from this map. Salary compares USD value, since stored amounts are in different currencies.
+const SORT_COLUMNS: Record<EmployeeSort, string[]> = {
+  name: ["e.last_name", "e.first_name"],
+  salary: ["e.salary_minor * fx.usd_cents_per_minor"],
+  hiredAt: ["e.hired_at"],
+  country: ["e.country"],
+};
+
+function orderBy(query: EmployeeListQuery, searching: boolean): string {
+  // Unsorted searches come best match first; otherwise alphabetical.
+  if (!query.sort && searching) return "bm25(employees_fts), e.id";
+  const direction = query.order === "desc" ? "DESC" : "ASC";
+  const columns = SORT_COLUMNS[query.sort ?? "name"].map((column) => `${column} ${direction}`);
+  // id breaks ties, so equal values keep a stable order across pages.
+  return [...columns, "e.id"].join(", ");
+}
+
 export function listEmployees(db: Database, query: EmployeeListQuery): Page<Employee> {
   const conditions: string[] = [];
   const values: string[] = [];
@@ -51,8 +68,7 @@ export function listEmployees(db: Database, query: EmployeeListQuery): Page<Empl
     values.push(value);
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-  // Search results come best match first; otherwise alphabetical.
-  const orderBy = match ? "bm25(employees_fts), e.id" : "e.last_name, e.first_name, e.id";
+  const fxJoin = query.sort === "salary" ? "JOIN fx_rates fx ON fx.currency = e.currency" : "";
 
   const items = db
     .query<Employee, (string | number)[]>(
@@ -61,8 +77,9 @@ export function listEmployees(db: Database, query: EmployeeListQuery): Page<Empl
               e.hired_at AS hiredAt
        FROM employees e
        ${join}
+       ${fxJoin}
        ${where}
-       ORDER BY ${orderBy}
+       ORDER BY ${orderBy(query, match !== null)}
        LIMIT ? OFFSET ?`,
     )
     .all(...values, query.pageSize, (query.page - 1) * query.pageSize);

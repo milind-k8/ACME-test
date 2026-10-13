@@ -47,3 +47,9 @@ export interface EmployeeFilterOptions {
   departments: string[];
   jobTitles: string[];
 }
+
+export const EMPLOYEE_SORTS = ["name", "salary", "hiredAt", "country"] as const;
+export type EmployeeSort = (typeof EMPLOYEE_SORTS)[number];
+
+export const SORT_ORDERS = ["asc", "desc"] as const;
+export type SortOrder = (typeof SORT_ORDERS)[number];

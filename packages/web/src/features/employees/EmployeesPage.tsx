@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Employee, EmployeeFilterOptions, Page } from "@smt/shared/api-types";
+import {
+  EMPLOYEE_SORTS,
+  type Employee,
+  type EmployeeFilterOptions,
+  type EmployeeSort,
+  type Page,
+} from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
@@ -79,6 +85,15 @@ export function EmployeesPage() {
   const setFilter = (name: FilterName, value: string | undefined) => {
     setParams({ [name]: value, page: undefined });
   };
+  // Without an explicit sort the server orders a search by best match, so no column is marked then.
+  const urlSort = params.get("sort");
+  const sort = EMPLOYEE_SORTS.find((s) => s === urlSort) ?? (urlSearch ? undefined : "name");
+  const order = params.get("order") === "desc" ? "desc" : "asc";
+  // The same column flips direction; a new column starts ascending. Either way, back to page 1.
+  const changeSort = (column: EmployeeSort) => {
+    const nextOrder = column === sort && order === "asc" ? "desc" : "asc";
+    setParams({ sort: column, order: nextOrder, page: undefined });
+  };
   const clearFilters = () => {
     setParams(Object.fromEntries([...FILTER_NAMES, "q", "page"].map((name) => [name, undefined])));
   };
@@ -128,7 +143,7 @@ export function EmployeesPage() {
       )}
       {state.status === "ready" && state.page.total > 0 && (
         <>
-          <EmployeeTable employees={state.page.items} />
+          <EmployeeTable employees={state.page.items} sort={sort} order={order} onSort={changeSort} />
           <Pagination
             page={state.page.page}
             pageSize={state.page.pageSize}

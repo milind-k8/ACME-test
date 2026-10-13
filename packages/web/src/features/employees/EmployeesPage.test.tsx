@@ -174,4 +174,34 @@ describe("EmployeesPage", () => {
     expect(screen.queryByRole("row", { name: /E00001/ })).toBeNull();
     expect(screen.getByRole("row", { name: /E00002/ })).toBeTruthy();
   });
+
+  it("sorts by a clicked column, reverses on a second click, and keeps the sort in the URL", async () => {
+    render(<EmployeesPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Salary/ }));
+    await waitFor(() => {
+      expect(window.location.search).toBe("?sort=salary&order=asc");
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: /Salary/ }));
+    await waitFor(() => {
+      expect(window.location.search).toBe("?sort=salary&order=desc");
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: /Hired/ }));
+    await waitFor(() => {
+      expect(window.location.search).toBe("?sort=hiredAt&order=asc");
+    });
+    expect(listEmployees.mock.calls.at(-1)?.[0].get("sort")).toBe("hiredAt");
+  });
+
+  it("starts on name order, so clicking Name first reverses it", async () => {
+    render(<EmployeesPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Name/ }));
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("?sort=name&order=desc");
+    });
+  });
 });

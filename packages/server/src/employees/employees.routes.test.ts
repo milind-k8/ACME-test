@@ -186,3 +186,58 @@ describe("GET /api/employees?q=", () => {
     expect(await search("?q=%20%20")).toHaveLength(people.length);
   });
 });
+
+describe("GET /api/employees?sort=", () => {
+  const usdCentsPerMinor: Record<string, number> = {};
+
+  beforeEach(() => {
+    for (const { currency, rate } of server.db
+      .query<{ currency: string; rate: number }, []>("SELECT currency, usd_cents_per_minor AS rate FROM fx_rates")
+      .all()) {
+      usdCentsPerMinor[currency] = rate;
+    }
+  });
+
+  const usd = (e: Employee) => e.salaryMinor * (usdCentsPerMinor[e.currency] ?? Number.NaN);
+  const list = async (query: string) => ((await (await getEmployees(query)).json()) as Page<Employee>).items;
+
+  it("sorts salaries by their USD value, so ¥6,500,000 ranks below $150,000", async () => {
+    const base = stored[0] as Employee;
+    replaceAllEmployees(server.db, [
+      { ...base, employeeNumber: "Y1", salaryMinor: 6_500_000, currency: "JPY" },
+      { ...base, employeeNumber: "U1", salaryMinor: 15_000_000, currency: "USD" },
+    ]);
+
+    expect((await list("?sort=salary&order=desc")).map((e) => e.employeeNumber)).toEqual(["U1", "Y1"]);
+    expect((await list("?sort=salary")).map((e) => e.employeeNumber)).toEqual(["Y1", "U1"]);
+  });
+
+  it("orders the whole list by USD salary, across pages", async () => {
+    const all = [...(await list("?sort=salary&pageSize=100")), ...(await list("?sort=salary&pageSize=100&page=2"))];
+
+    expect(all.map(usd)).toEqual(stored.map(usd).sort((a, b) => a - b));
+  });
+
+  it.each([
+    ["hiredAt", (e: Employee) => e.hiredAt],
+    ["country", (e: Employee) => e.country],
+  ] as const)("sorts by %s, newest/last first with order=desc", async (sort, key) => {
+    const items = await list(`?sort=${sort}&order=desc&pageSize=100`);
+
+    const keys = items.map(key);
+    expect(keys).toEqual([...keys].sort().reverse());
+  });
+
+  it("breaks ties by id, so no employee repeats or goes missing between pages", async () => {
+    const pages = await Promise.all([1, 2, 3, 4].map((page) => list(`?sort=country&pageSize=50&page=${String(page)}`)));
+
+    const ids = pages.flat().map((e) => e.id);
+    expect(new Set(ids).size).toBe(200);
+  });
+
+  it("returns 400 for an unknown sort column", async () => {
+    const res = await getEmployees("?sort=salary_minor;DROP TABLE employees");
+
+    expect(res.status).toBe(400);
+  });
+});
