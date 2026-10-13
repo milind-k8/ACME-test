@@ -110,8 +110,9 @@ A work tool for someone who looks at numbers all day. It should feel **calm, den
 ### Foundations
 
 - **Base:** shadcn's default theme (`neutral`), CSS variables in `index.css`. Override only what's listed here.
-- **Colour:** neutral grey with one accent (`--primary` = indigo) for primary actions and links. Red only for destructive actions and errors, green only for success toasts. Charts use one hue in different shades.
+- **Colour:** neutral grey with one accent (`--primary` = Facebook blue `#166FE5` in light and dark mode; the brand `#1877F2` fails AA with white text, 4.23:1 vs 4.73:1) for primary actions and links. Red only for destructive actions and errors, green only for success toasts. Charts use one hue in different shades.
 - **Typography:** Tailwind's default sans. Money columns use **tabular figures** (`tabular-nums`) and are **right-aligned**.
+- **Form fields** (`Input`, `Select`, …): no focus halo ring. Focus shows as the border turning `--primary`. Remove shadcn's `focus-visible:ring-*` classes when adding a field component.
 - **Spacing:** Tailwind's scale only, no arbitrary values like `p-[13px]`.
 - **Dark mode:** supported by shadcn's `dark` class. Light is the default; dark is nice to have.
 
