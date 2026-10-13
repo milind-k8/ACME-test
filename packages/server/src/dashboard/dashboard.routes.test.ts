@@ -146,3 +146,27 @@ describe("GET /api/dashboard filters", () => {
     expect(body.byCountry).toEqual([]);
   });
 });
+
+describe("GET /api/dashboard original currency", () => {
+  beforeEach(() => {
+    replaceAllEmployees(server.db, [
+      { ...person(1, 300_000_000, "INR", "IN", "2020-01-01"), department: "Engineering" },
+      { ...person(2, 500_000_000, "INR", "IN", "2020-01-01"), department: "Engineering" },
+      { ...person(3, 15_000_000, "USD", "US", "2020-01-01"), department: "Engineering" },
+    ]);
+  });
+
+  it("gives a single-currency country its figures in that currency", async () => {
+    const body = (await (await getDashboard()).json()) as Dashboard;
+
+    const india = body.byCountry.find((c) => c.country === "IN");
+    expect(india?.local).toMatchObject({ currency: "INR", medianMinor: 400_000_000 });
+    expect(body.byDepartment[0]?.local).toBeNull(); // Engineering spans INR and USD
+  });
+
+  it("makes department rows single-currency once filtered to one country", async () => {
+    const body = (await (await getDashboard("?country=IN")).json()) as Dashboard;
+
+    expect(body.byDepartment[0]?.local).toMatchObject({ currency: "INR", payrollMinor: 800_000_000 });
+  });
+});

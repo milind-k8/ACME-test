@@ -49,6 +49,8 @@ describe("listPay", () => {
       department: "Engineering",
       jobTitle: "Software Engineer",
       usdCents: 3_600_000,
+      salaryMinor: 300_000_000,
+      currency: "INR",
       hiredAt: "2020-01-15",
     });
   });

@@ -36,11 +36,14 @@ describe("payStats", () => {
   });
 });
 
+// A USD salary: the stored amount and its USD value are the same number of cents.
 const row = (usdCents: number, hiredAt: string): PayRow => ({
   country: "IN",
   department: "Engineering",
   jobTitle: "Software Engineer",
   usdCents,
+  salaryMinor: usdCents,
+  currency: "USD",
   hiredAt,
 });
 const today = "2026-10-13";
@@ -79,7 +82,7 @@ describe("groupBy", () => {
   it("gives each country its own stats, largest headcount first", () => {
     const rows = [at("IN", 100), at("US", 150), at("IN", 200), at("DE", 250), at("IN", 300), at("US", 400)];
 
-    expect(groupBy(rows, "country")).toEqual([
+    expect(groupBy(rows, "country")).toMatchObject([
       { country: "IN", ...payStats([100, 200, 300]) },
       { country: "US", ...payStats([150, 400]) },
       { country: "DE", ...payStats([250]) },
@@ -147,5 +150,34 @@ describe("hiresByMonth", () => {
         .map((m) => m.month)
         .slice(0, 2),
     ).toEqual(["2026-02", "2026-03"]);
+  });
+});
+
+describe("groupBy original currency", () => {
+  // ₹ rows: rate 0.012 US cents per paisa, so ₹1,000,001.00 (100,000,100 paise) is $12,000.01 (1,200,001 cents).
+  const inr = (salaryMinor: number, department = "Engineering"): PayRow => ({
+    ...row(Math.round(salaryMinor * 0.012), "2020-01-01"),
+    department,
+    salaryMinor,
+    currency: "INR",
+  });
+
+  it("gives a single-currency group its figures in that currency, from the stored amounts", () => {
+    const rows = [inr(100_000_000), inr(100_000_100), inr(300_000_000)];
+
+    expect(groupBy(rows, "department")[0]?.local).toEqual({
+      currency: "INR",
+      payrollMinor: 500_000_100,
+      minMinor: 100_000_000,
+      medianMinor: 100_000_100,
+      avgMinor: 166_666_700,
+      maxMinor: 300_000_000,
+    });
+  });
+
+  it("leaves a mixed-currency group without local figures", () => {
+    const rows = [inr(100_000_000), { ...row(1_500_000, "2020-01-01"), department: "Engineering" }];
+
+    expect(groupBy(rows, "department")[0]?.local).toBeNull();
   });
 });

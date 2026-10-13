@@ -18,6 +18,7 @@ const dashboard: Dashboard = {
   byCountry: [
     {
       country: "IN",
+      local: null,
       headcount: 1_260,
       payrollUsdCents: 6_048_000_000,
       minUsdCents: 1_200_000,
@@ -29,6 +30,7 @@ const dashboard: Dashboard = {
   byDepartment: [
     {
       department: "Engineering",
+      local: null,
       headcount: 3_120,
       payrollUsdCents: 30_000_000_000,
       minUsdCents: 2_000_000,
@@ -40,6 +42,7 @@ const dashboard: Dashboard = {
   byJobTitle: [
     {
       jobTitle: "Engineering Manager",
+      local: null,
       headcount: 480,
       payrollUsdCents: 7_200_000_000,
       minUsdCents: 6_000_000,

@@ -1,4 +1,4 @@
-import type { DashboardSummary, MonthlyHires, PayStats, SalaryBand } from "@smt/shared/api-types";
+import type { DashboardSummary, GroupPay, LocalPay, MonthlyHires, PayStats, SalaryBand } from "@smt/shared/api-types";
 
 /** Middle value of an already-sorted list; an even count averages the middle two (rounded to a whole cent). */
 export function median(sorted: readonly number[]): number {
@@ -27,6 +27,9 @@ export interface PayRow {
   department: string;
   jobTitle: string;
   usdCents: number;
+  /** The stored amount, in minor units of `currency` */
+  salaryMinor: number;
+  currency: string;
   hiredAt: string;
 }
 
@@ -68,21 +71,48 @@ export function groupBy<F extends GroupField>(
   rows: readonly PayRow[],
   field: F,
   orderBy: "headcount" | "median" = "headcount",
-): (PayStats & Record<F, string>)[] {
-  const groups = new Map<string, number[]>();
+): GroupPay<F>[] {
+  // `currency` is null once a group mixes currencies. Within one currency, ordering by USD is the same as ordering
+  // by the stored amount (the rate is positive), so `minor` stays sorted too.
+  const groups = new Map<string, { usd: number[]; minor: number[]; currency: string | null }>();
   for (const r of rows) {
     const key = r[field];
-    const list = groups.get(key);
-    if (list) list.push(r.usdCents);
-    else groups.set(key, [r.usdCents]);
+    const group = groups.get(key);
+    if (!group) {
+      groups.set(key, { usd: [r.usdCents], minor: [r.salaryMinor], currency: r.currency });
+      continue;
+    }
+    group.usd.push(r.usdCents);
+    group.minor.push(r.salaryMinor);
+    if (group.currency !== r.currency) group.currency = null;
   }
   return [...groups]
-    .map(([key, sorted]) => ({ [field]: key, ...payStats(sorted) }) as PayStats & Record<F, string>)
+    .map(
+      ([key, g]) =>
+        ({
+          [field]: key,
+          ...payStats(g.usd),
+          local: g.currency === null ? null : localPay(g.currency, g.minor),
+        }) as GroupPay<F>,
+    )
     .sort(
       (a, b) =>
         (orderBy === "median" ? b.medianUsdCents - a.medianUsdCents : b.headcount - a.headcount) ||
         (a[field] < b[field] ? -1 : 1),
     );
+}
+
+/** The same figures as payStats, in one currency's minor units. `sorted` is ascending. */
+function localPay(currency: string, sorted: readonly number[]): LocalPay {
+  const stats = payStats(sorted);
+  return {
+    currency,
+    payrollMinor: stats.payrollUsdCents,
+    minMinor: stats.minUsdCents,
+    medianMinor: stats.medianUsdCents,
+    avgMinor: stats.avgUsdCents,
+    maxMinor: stats.maxUsdCents,
+  };
 }
 
 const BAND_USD_CENTS = 2_500_000; // $25,000
