@@ -49,7 +49,8 @@ describe("GET /api/dashboard", () => {
     const res = await getDashboard();
 
     expect(res.status).toBe(200);
-    expect((await res.json()) as Dashboard).toEqual({
+    // The distribution and hiring series have their own test below.
+    expect((await res.json()) as Dashboard).toMatchObject({
       fxAsOf: "2026-10-01",
       summary: {
         headcount: 3,
@@ -94,5 +95,14 @@ describe("GET /api/dashboard", () => {
 
   it("returns 401 without a session", async () => {
     expect((await getDashboard("", "")).status).toBe(401);
+  });
+
+  it("returns the salary distribution and hires per month", async () => {
+    const body = (await (await getDashboard()).json()) as Dashboard;
+
+    // $36,000 and $43,550 in the $25–50k band; $150,000 in $150–175k.
+    expect(body.salaryBands.map((b) => b.headcount)).toEqual([0, 2, 0, 0, 0, 0, 1, 0, 0]);
+    expect(body.hiresByMonth).toHaveLength(12);
+    expect(body.hiresByMonth.find((m) => m.month === "2026-03")).toEqual({ month: "2026-03", hires: 1 });
   });
 });

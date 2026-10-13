@@ -82,8 +82,8 @@ Query design: [ADR-007](../adrs/007-dashboard-aggregation.md); caching: [ADR-008
 - **Backend:** `summarize.ts`: `salaryBands(sortedUsdCents)` ($25,000 bands, last band "$200,000+", every band present) and `hiresByMonth(rows, today)` (12 months ending with today's month, every month present).
 - **Frontend:** `SalaryDistributionChart.tsx` (columns per band, reference lines at median and average) and `HiresChart.tsx` (columns per month, labels like "Oct").
 - **Test list:**
-  - [ ] unit `summarize`: a salary of exactly $25,000 falls in the second band · $250,000 falls in "$200,000+" · all 9 bands present with zeros · hires: 12 months, oldest first, current month last, a hire 13 months ago not counted, empty months are 0
-  - [ ] component: each chart renders its titled figure and `sr-only` summary
+  - [x] unit `summarize`: a salary of exactly $25,000 falls in the second band · $250,000 falls in "$200,000+" · all 9 bands present with zeros · hires: 12 months, oldest first, current month last, a hire 13 months ago not counted, empty months are 0
+  - [x] component: each chart renders its titled figure and `sr-only` summary
 
 ## Slice 6: Filters
 

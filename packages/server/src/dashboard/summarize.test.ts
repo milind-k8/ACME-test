@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { groupBy, median, payStats, summarize, type PayRow } from "./summarize";
+import { groupBy, hiresByMonth, median, payStats, salaryBands, summarize, type PayRow } from "./summarize";
 
 describe("median", () => {
   it.each([
@@ -95,5 +95,57 @@ describe("groupBy", () => {
     const rows = [titled("Analyst", 100), titled("Engineer", 300), titled("Analyst", 120), titled("Manager", 500)];
 
     expect(groupBy(rows, "jobTitle", "median").map((g) => g.jobTitle)).toEqual(["Manager", "Engineer", "Analyst"]);
+  });
+});
+
+describe("salaryBands", () => {
+  const dollars = (n: number) => n * 100;
+
+  it("counts salaries in $25,000 bands, with every band present", () => {
+    const bands = salaryBands([dollars(10_000), dollars(24_999), dollars(25_000), dollars(250_000)]);
+
+    expect(bands).toHaveLength(9);
+    expect(bands[0]).toEqual({ fromUsdCents: 0, toUsdCents: dollars(25_000), headcount: 2 });
+    expect(bands[1]).toEqual({ fromUsdCents: dollars(25_000), toUsdCents: dollars(50_000), headcount: 1 });
+    expect(bands[2]?.headcount).toBe(0);
+    expect(bands[8]).toEqual({ fromUsdCents: dollars(200_000), toUsdCents: null, headcount: 1 });
+  });
+});
+
+describe("hiresByMonth", () => {
+  const hired = (hiredAt: string) => row(1, hiredAt);
+
+  it("counts hires in each of the last 12 months, oldest first, with empty months as 0", () => {
+    const months = hiresByMonth(
+      [hired("2026-10-01"), hired("2026-10-12"), hired("2025-11-30"), hired("2025-10-31")],
+      today,
+    );
+
+    expect(months.map((m) => m.month)).toEqual([
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+      "2026-10",
+    ]);
+    expect(months[0]).toEqual({ month: "2025-11", hires: 1 });
+    expect(months[1]).toEqual({ month: "2025-12", hires: 0 });
+    expect(months[11]).toEqual({ month: "2026-10", hires: 2 });
+    expect(months.reduce((sum, m) => sum + m.hires, 0)).toBe(3);
+  });
+
+  it("crosses the year boundary in January", () => {
+    expect(
+      hiresByMonth([], "2027-01-05")
+        .map((m) => m.month)
+        .slice(0, 2),
+    ).toEqual(["2026-02", "2026-03"]);
   });
 });

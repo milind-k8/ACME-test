@@ -49,6 +49,8 @@ const getDashboard = mock(() =>
     byCountry: [],
     byDepartment: [],
     byJobTitle: [],
+    salaryBands: [],
+    hiresByMonth: [],
   }),
 );
 void mock.module("./features/dashboard/dashboard.api", () => ({ getDashboard }));

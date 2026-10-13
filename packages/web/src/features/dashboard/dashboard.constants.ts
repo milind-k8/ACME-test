@@ -33,4 +33,8 @@ export const CHART_COPY = {
   department: "Department",
   payByJobTitle: "Pay per job title",
   jobTitle: "Job title",
+  salaryDistribution: "Salary distribution",
+  hiresPerMonth: "Hires per month",
+  medianMarker: (value: string) => `Median ${value}`,
+  averageMarker: (value: string) => `Average ${value}`,
 } as const;

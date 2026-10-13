@@ -90,6 +90,19 @@ export interface DashboardSummary extends PayStats {
   avgTenureYears: number;
 }
 
+export interface SalaryBand {
+  fromUsdCents: number;
+  /** Exclusive; null for the open-ended top band */
+  toUsdCents: number | null;
+  headcount: number;
+}
+
+export interface MonthlyHires {
+  /** YYYY-MM */
+  month: string;
+  hires: number;
+}
+
 export interface Dashboard {
   /** YYYY-MM-DD date of the FX snapshot */
   fxAsOf: string;
@@ -97,6 +110,8 @@ export interface Dashboard {
   byCountry: (PayStats & { country: string })[];
   byDepartment: (PayStats & { department: string })[];
   byJobTitle: (PayStats & { jobTitle: string })[];
+  salaryBands: SalaryBand[];
+  hiresByMonth: MonthlyHires[];
 }
 
 /** The list and the dashboard filter on the same three fields. */

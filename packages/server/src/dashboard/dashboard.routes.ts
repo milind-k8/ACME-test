@@ -5,7 +5,7 @@ import type { Config } from "../config";
 import { json } from "../http/responses";
 import { withAuth } from "../http/with-auth";
 import { fxAsOf, listPay } from "./dashboard.repository";
-import { groupBy, summarize } from "./summarize";
+import { groupBy, hiresByMonth, salaryBands, summarize } from "./summarize";
 
 export function dashboardRoutes(db: Database, config: Config, now: () => Date) {
   return {
@@ -20,6 +20,8 @@ export function dashboardRoutes(db: Database, config: Config, now: () => Date) {
           byCountry: groupBy(rows, "country"),
           byDepartment: groupBy(rows, "department"),
           byJobTitle: groupBy(rows, "jobTitle", "median"),
+          salaryBands: salaryBands(rows.map((r) => r.usdCents)),
+          hiresByMonth: hiresByMonth(rows, today),
         };
         return json(dashboard);
       }),

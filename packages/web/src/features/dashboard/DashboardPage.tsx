@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Dashboard } from "@smt/shared/api-types";
+import type { Dashboard, SalaryBand } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
@@ -10,11 +10,33 @@ const formatUsdCompact = (cents: number) => compactUsd.format(cents / 100);
 import { useQueryParams } from "@/lib/router";
 import { getDashboard } from "./dashboard.api";
 import { CHART_COPY, DASHBOARD_COPY } from "./dashboard.constants";
+import { ColumnChart } from "./ColumnChart";
 import { HorizontalBarChart } from "./HorizontalBarChart";
 import { PayTable } from "./PayTable";
 import { StatTile } from "./StatTile";
 
 const count = new Intl.NumberFormat("en-US");
+const thousands = (cents: number) => String(cents / 100_000);
+const monthName = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+
+/** "$25–50K", or "$200K+" for the open-ended top band. */
+const bandLabel = (band: SalaryBand) =>
+  band.toUsdCents === null
+    ? `$${thousands(band.fromUsdCents)}K+`
+    : `$${thousands(band.fromUsdCents)}–${thousands(band.toUsdCents)}K`;
+
+/** The band's lower edge for the axis: "$0", "$25K", …, "$200K+". */
+const bandTick = (band: SalaryBand) =>
+  band.fromUsdCents === 0 ? "$0" : `$${thousands(band.fromUsdCents)}K${band.toUsdCents === null ? "+" : ""}`;
+
+/** A marker at the band a salary falls in; none when there are no bands (e.g. no matching employees). */
+const markerAt = (bands: SalaryBand[], cents: number, label: string) => {
+  const band = bands.find((b) => b.toUsdCents === null || cents < b.toUsdCents);
+  return band ? [{ at: bandLabel(band), label }] : [];
+};
+
+/** "2025-11" → "Nov 2025". */
+const monthLabel = (month: string) => monthName.format(new Date(`${month}-01T00:00:00Z`));
 
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; data: Dashboard };
 
@@ -92,42 +114,72 @@ export function DashboardPage() {
         </dl>
       )}
       {state.status === "ready" && (
-        <section className="flex flex-col gap-4">
-          {/* Bars read best sorted by their own value; the table keeps the API's largest-headcount order. */}
-          <HorizontalBarChart
-            title={CHART_COPY.medianByCountry}
-            rows={state.data.byCountry
-              .map((c) => ({ label: formatCountry(c.country), value: c.medianUsdCents }))
-              .sort((a, b) => b.value - a.value)}
-            formatValue={formatUsd}
-            formatTick={formatUsdCompact}
-          />
-          <PayTable
-            caption={CHART_COPY.payByCountry}
-            groupLabel={CHART_COPY.country}
-            rows={state.data.byCountry}
-            groupOf={(c) => c.country}
-            format={formatCountry}
-          />
-          <HorizontalBarChart
-            title={CHART_COPY.headcountByDepartment}
-            rows={state.data.byDepartment.map((d) => ({ label: d.department, value: d.headcount }))}
-            formatValue={(n) => count.format(n)}
-            formatTick={(n) => count.format(n)}
-          />
-          <PayTable
-            caption={CHART_COPY.payByDepartment}
-            groupLabel={CHART_COPY.department}
-            rows={state.data.byDepartment}
-            groupOf={(d) => d.department}
-          />
-          <PayTable
-            caption={CHART_COPY.payByJobTitle}
-            groupLabel={CHART_COPY.jobTitle}
-            rows={state.data.byJobTitle}
-            groupOf={(j) => j.jobTitle}
-          />
-        </section>
+        <>
+          <section className="grid gap-4 xl:grid-cols-2">
+            <ColumnChart
+              title={CHART_COPY.salaryDistribution}
+              rows={state.data.salaryBands.map((b) => ({ label: bandLabel(b), value: b.headcount, tick: bandTick(b) }))}
+              formatValue={(n) => count.format(n)}
+              markers={[
+                ...markerAt(
+                  state.data.salaryBands,
+                  state.data.summary.medianUsdCents,
+                  CHART_COPY.medianMarker(formatUsd(state.data.summary.medianUsdCents)),
+                ),
+                ...markerAt(
+                  state.data.salaryBands,
+                  state.data.summary.avgUsdCents,
+                  CHART_COPY.averageMarker(formatUsd(state.data.summary.avgUsdCents)),
+                ),
+              ]}
+            />
+            <ColumnChart
+              title={CHART_COPY.hiresPerMonth}
+              rows={state.data.hiresByMonth.map((m) => ({
+                label: monthLabel(m.month),
+                value: m.hires,
+                tick: monthLabel(m.month).slice(0, 3),
+              }))}
+              formatValue={(n) => count.format(n)}
+            />
+          </section>
+          <section className="flex flex-col gap-4">
+            {/* Bars read best sorted by their own value; the table keeps the API's largest-headcount order. */}
+            <HorizontalBarChart
+              title={CHART_COPY.medianByCountry}
+              rows={state.data.byCountry
+                .map((c) => ({ label: formatCountry(c.country), value: c.medianUsdCents }))
+                .sort((a, b) => b.value - a.value)}
+              formatValue={formatUsd}
+              formatTick={formatUsdCompact}
+            />
+            <PayTable
+              caption={CHART_COPY.payByCountry}
+              groupLabel={CHART_COPY.country}
+              rows={state.data.byCountry}
+              groupOf={(c) => c.country}
+              format={formatCountry}
+            />
+            <HorizontalBarChart
+              title={CHART_COPY.headcountByDepartment}
+              rows={state.data.byDepartment.map((d) => ({ label: d.department, value: d.headcount }))}
+              formatValue={(n) => count.format(n)}
+              formatTick={(n) => count.format(n)}
+            />
+            <PayTable
+              caption={CHART_COPY.payByDepartment}
+              groupLabel={CHART_COPY.department}
+              rows={state.data.byDepartment}
+              groupOf={(d) => d.department}
+            />
+            <PayTable
+              caption={CHART_COPY.payByJobTitle}
+              groupLabel={CHART_COPY.jobTitle}
+              rows={state.data.byJobTitle}
+              groupOf={(j) => j.jobTitle}
+            />
+          </section>
+        </>
       )}
     </div>
   );

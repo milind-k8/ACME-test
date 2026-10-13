@@ -1,4 +1,4 @@
-import type { DashboardSummary, PayStats } from "@smt/shared/api-types";
+import type { DashboardSummary, MonthlyHires, PayStats, SalaryBand } from "@smt/shared/api-types";
 
 /** Middle value of an already-sorted list; an even count averages the middle two (rounded to a whole cent). */
 export function median(sorted: readonly number[]): number {
@@ -83,4 +83,38 @@ export function groupBy<F extends GroupField>(
         (orderBy === "median" ? b.medianUsdCents - a.medianUsdCents : b.headcount - a.headcount) ||
         (a[field] < b[field] ? -1 : 1),
     );
+}
+
+const BAND_USD_CENTS = 2_500_000; // $25,000
+const BAND_COUNT = 9; // $0–25k … $175–200k, then $200k+
+
+/** Headcount per $25,000 band, every band present, the last one open-ended. */
+export function salaryBands(usdCents: readonly number[]): SalaryBand[] {
+  const counts = new Array<number>(BAND_COUNT).fill(0);
+  for (const cents of usdCents) {
+    const band = Math.min(Math.floor(cents / BAND_USD_CENTS), BAND_COUNT - 1);
+    counts[band] = (counts[band] ?? 0) + 1;
+  }
+  return counts.map((headcount, i) => ({
+    fromUsdCents: i * BAND_USD_CENTS,
+    toUsdCents: i === BAND_COUNT - 1 ? null : (i + 1) * BAND_USD_CENTS,
+    headcount,
+  }));
+}
+
+/** Hires in each of the 12 months ending with today's month, oldest first, every month present. */
+export function hiresByMonth(rows: readonly PayRow[], today: string): MonthlyHires[] {
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7)); // 1–12
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const index = year * 12 + (month - 1) - (11 - i);
+    return `${String(Math.floor(index / 12))}-${String((index % 12) + 1).padStart(2, "0")}`;
+  });
+  const counts = new Map(months.map((m) => [m, 0]));
+  for (const r of rows) {
+    const key = r.hiredAt.slice(0, 7);
+    const current = counts.get(key);
+    if (current !== undefined) counts.set(key, current + 1);
+  }
+  return months.map((m) => ({ month: m, hires: counts.get(m) ?? 0 }));
 }

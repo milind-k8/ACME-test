@@ -33,10 +33,10 @@ The first page HR sees: the numbers they're asked for most, in USD from the date
 - [x] The page shows them as a table
 
 ## Slice 5: Salary distribution and hiring
-- [ ] The response has a salary distribution: headcount per $25,000 USD band from $0 up to "$200,000+", with every band present (zeros included)
-- [ ] The response has hires per month for the last 12 months (oldest first, including the current month), with every month present
-- [ ] A histogram shows the salary distribution, with the median and average marked
-- [ ] A column chart shows hires per month
+- [x] The response has a salary distribution: headcount per $25,000 USD band from $0 up to "$200,000+", with every band present (zeros included)
+- [x] The response has hires per month for the last 12 months (oldest first, including the current month), with every month present
+- [x] A histogram shows the salary distribution, with the median and average marked
+- [x] A column chart shows hires per month
 
 ## Slice 6: Filters
 - [ ] `?country=`, `?department=`, and `?jobTitle=` narrow every figure, table, and chart on the dashboard, and combine

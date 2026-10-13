@@ -48,6 +48,31 @@ const dashboard: Dashboard = {
       maxUsdCents: 25_000_000,
     },
   ],
+  salaryBands: [
+    { fromUsdCents: 0, toUsdCents: 2_500_000, headcount: 900 },
+    { fromUsdCents: 2_500_000, toUsdCents: 5_000_000, headcount: 2_400 },
+    { fromUsdCents: 5_000_000, toUsdCents: 7_500_000, headcount: 3_000 },
+    { fromUsdCents: 7_500_000, toUsdCents: 10_000_000, headcount: 2_000 },
+    { fromUsdCents: 10_000_000, toUsdCents: 12_500_000, headcount: 900 },
+    { fromUsdCents: 12_500_000, toUsdCents: 15_000_000, headcount: 450 },
+    { fromUsdCents: 15_000_000, toUsdCents: 17_500_000, headcount: 200 },
+    { fromUsdCents: 17_500_000, toUsdCents: 20_000_000, headcount: 100 },
+    { fromUsdCents: 20_000_000, toUsdCents: null, headcount: 50 },
+  ],
+  hiresByMonth: [
+    { month: "2025-11", hires: 40 },
+    { month: "2025-12", hires: 35 },
+    { month: "2026-01", hires: 60 },
+    { month: "2026-02", hires: 52 },
+    { month: "2026-03", hires: 48 },
+    { month: "2026-04", hires: 51 },
+    { month: "2026-05", hires: 47 },
+    { month: "2026-06", hires: 55 },
+    { month: "2026-07", hires: 44 },
+    { month: "2026-08", hires: 43 },
+    { month: "2026-09", hires: 50 },
+    { month: "2026-10", hires: 37 },
+  ],
 };
 
 const getDashboard = mock<(params: URLSearchParams) => Promise<Dashboard>>(() => Promise.resolve(dashboard));
@@ -122,5 +147,23 @@ describe("DashboardPage", () => {
     expect((await screen.findByRole("table", { name: "Pay per job title" })).textContent).toContain(
       "Engineering Manager",
     );
+  });
+
+  it("shows the salary distribution in $25K bands with the median and average marked", async () => {
+    render(<DashboardPage />);
+
+    const figure = await screen.findByRole("figure", { name: "Salary distribution" });
+    expect(figure.textContent).toContain("$50–75K: 3,000");
+    expect(figure.textContent).toContain("$200K+: 50");
+    expect(figure.textContent).toContain("Median $78,500");
+    expect(figure.textContent).toContain("Average $84,512");
+  });
+
+  it("shows hires per month for the last 12 months", async () => {
+    render(<DashboardPage />);
+
+    const figure = await screen.findByRole("figure", { name: "Hires per month" });
+    expect(figure.textContent).toContain("Nov 2025: 40");
+    expect(figure.textContent).toContain("Oct 2026: 37");
   });
 });

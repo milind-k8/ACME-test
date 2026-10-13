@@ -16,7 +16,7 @@ interface HorizontalBarChartProps {
 
 export function HorizontalBarChart({ title, rows, formatValue, formatTick }: HorizontalBarChartProps) {
   return (
-    <figure aria-label={title} className="rounded-lg border bg-background p-4 shadow-xs">
+    <figure aria-label={title} className="relative rounded-lg border bg-background p-4 shadow-xs">
       <figcaption className="text-sm font-medium">{title}</figcaption>
       {/* The text alternative: the same numbers for screen readers. */}
       <ul className="sr-only">
