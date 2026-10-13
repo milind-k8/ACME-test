@@ -48,4 +48,4 @@ POST /api/logout                       → 204           + Set-Cookie: session=;
 - Sentry wiring (ADR-004), as its own change.
 
 ---
-- [ ] Reviewed
+- [x] Reviewed
