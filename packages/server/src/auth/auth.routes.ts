@@ -35,7 +35,7 @@ export function authRoutes(db: Database, config: Config, now: () => Date) {
         }
         // Checked before the password, so a limited client can't confirm a guess (not even the right one).
         const client = clientAddress(
-          req.headers.get("X-Forwarded-For"),
+          req.headers.get("X-Real-IP"),
           server.requestIP(req)?.address ?? null,
           config.trustProxy,
         );

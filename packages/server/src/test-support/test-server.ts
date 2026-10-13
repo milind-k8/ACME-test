@@ -21,13 +21,15 @@ export const TEST_CONFIG: Config = {
 const adminHash = await Bun.password.hash(TEST_ADMIN.password, { algorithm: "argon2id" });
 
 // databasePath: a temp file when a test needs a second connection to the same database; ":memory:" otherwise.
-export async function startTestServer(options: { now?: () => Date; databasePath?: string } = {}) {
+export async function startTestServer(
+  options: { now?: () => Date; databasePath?: string; config?: Partial<Config> } = {},
+) {
   const now = options.now ?? (() => new Date());
   const db = openDatabase(options.databasePath ?? ":memory:");
   upsertUser(db, TEST_ADMIN.email, adminHash);
   const server = Bun.serve({
     port: 0,
-    routes: createRoutes(db, TEST_CONFIG, now),
+    routes: createRoutes(db, { ...TEST_CONFIG, ...options.config }, now),
     fetch: notFound,
     error: unexpected,
   });
