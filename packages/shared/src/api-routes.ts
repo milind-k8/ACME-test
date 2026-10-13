@@ -3,4 +3,6 @@ export const API_ROUTES = {
   login: "/api/login",
   logout: "/api/logout",
   me: "/api/me",
+  employees: "/api/employees",
+  employeeFilters: "/api/employees/filters",
 } as const;

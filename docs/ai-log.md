@@ -30,3 +30,23 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
   - Bun's `cookies.delete` produced a logout cookie that didn't match the login cookie (`SameSite=Lax`, no `Secure`). It switched to clearing with the same attributes.
   - It stopped dev servers with a broad `pkill` pattern that could have killed mine, then switched to killing only the processes it started.
 - **Left for later:** login rate limiting (ADR-003) and Sentry (ADR-004).
+
+## Employee list (2026-10-13)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** the next feature from requirements.md. The AI proposed the employee data model and seed as a separate feature first; **I merged them**, because the seed only exists to feed the list. The product features are list, CRUD, insights, and the nice-to-haves.
+- **I decided:**
+  - Employees get an employee number (`E00001`…).
+  - Filter options come from `GET /api/employees/filters`, not a fixed list.
+  - Countries are stored as ISO alpha-2 codes and named in the UI.
+  - shadcn `Select` over a native `<select>`.
+  - The FX snapshot lives in a migration, so every database has it and a rate change is a new migration. backend.md updated.
+- **Built test-first** in five slices plus a 10k-row performance check. Constraint, trigger, and query-plan tests that passed straight away were checked by removing the constraint, trigger, or index on purpose.
+- **AI corrections:**
+  - `shadcn add` again installed the unrelated `cn` package, and this time the `radix-ui` umbrella package and a `lucide-react` import too. The AI removed them, installed only `@radix-ui/react-select`, and used local icons.
+  - The query-plan test went blind when the list query aliased `employees` as `e` (SQLite then reports `SCAN e`). The AI found it by dropping an index and seeing the test still pass, then fixed the check.
+  - happy-dom started at `about:blank`, where `history.pushState` does nothing, so URL-state tests couldn't pass. It gave the test DOM a real URL.
+  - It moved `NewEmployee` to `@smt/shared` after noticing the repository imported it from `seed/`, against the import rules.
+- **Found along the way:** my local `.env` has the Docker `DATABASE_PATH`, so `bun run seed` and `bun dev` can't open the database on macOS. There's no Prettier config in the repo.
+- **Left for later:** seeding an empty database on first Docker boot (devops.md mentions it), and typo-tolerant search.

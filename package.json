@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "bun run --filter '@smt/server' --filter '@smt/web' dev",
     "build": "bun run --filter '@smt/web' build",
+    "seed": "bun run --filter '@smt/server' seed",
     "test": "bun run --filter '*' test",
     "lint": "eslint .",
     "typecheck": "bun run --filter '*' typecheck",

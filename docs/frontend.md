@@ -15,7 +15,7 @@ How to build the UI. Read [development-process.md](development-process.md) first
 | Charts | CSS bars (`BarList.tsx`) | No chart library |
 | Tests | `bun test` + `@testing-library/react` + `happy-dom` | |
 
-**shadcn components used:** `Button`, `Input`, `Label`, `Select`, `Table`, `Dialog`, `AlertDialog`, `Card`, `Badge`, `Skeleton`.
+**shadcn components used:** `Button`, `Input`, `Label`, `Select`, `Table`, `DropdownMenu`, `Dialog`, `AlertDialog`, `Card`, `Badge`, `Skeleton`. The CLI adds an unrelated `cn` package, the `radix-ui` umbrella package, and `lucide-react` imports: remove them, install the single `@radix-ui/react-*` package pinned exact, and use `components/icons/`.
 **Not used** (they pull in extra libraries): `Form` (react-hook-form + zod), `Chart` (Recharts), `Sonner`, the TanStack data-table.
 
 **Allowed dependencies:** `react`, `react-dom`, `@sentry/react` ([ADR-004](adrs/004-sentry-error-monitoring.md)), shadcn's peers (`@radix-ui/*` per component, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`). Dev: `tailwindcss`, `bun-plugin-tailwind`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `@testing-library/dom` (its required peer), `@happy-dom/global-registrator`.
@@ -115,7 +115,8 @@ A work tool for someone who looks at numbers all day. It should feel **calm, den
 ### Foundations
 
 - **Base:** shadcn's default theme (`neutral`), CSS variables in `index.css`. Override only what's listed here.
-- **Colour:** neutral grey with one accent (`--primary` = Facebook blue `#166FE5` in light and dark mode; the brand `#1877F2` fails AA with white text, 4.23:1 vs 4.73:1) for primary actions and links. Red only for destructive actions and errors, green only for success toasts. Charts use one hue in different shades.
+- **Surfaces:** the content area is `bg-muted/50`; toolbars and tables sit on white panels (`rounded-lg border bg-background shadow-xs`).
+- **Colour:** neutral grey with one accent (`--primary` = Facebook blue `#166FE5` in light and dark mode; the brand `#1877F2` fails AA with white text, 4.23:1 vs 4.73:1) for primary actions and links. Red only for destructive actions and errors, green only for success toasts. Blue text fails AA on a blue tint (4.15:1 on `bg-primary/10`), so tinted backgrounds carry `text-foreground` and the accent goes on the icon. Charts use one hue in different shades.
 - **Typography:** Tailwind's default sans. Money columns use **tabular figures** (`tabular-nums`) and are **right-aligned**.
 - **Form fields** (`Input`, `Select`, …): no focus halo ring. Focus shows as the border turning `--primary`. Remove shadcn's `focus-visible:ring-*` classes when adding a field component.
 - **Spacing:** Tailwind's scale only, no arbitrary values like `p-[13px]`.
@@ -123,7 +124,7 @@ A work tool for someone who looks at numbers all day. It should feel **calm, den
 
 ### Layout
 
-- App shell: left nav (Employees, Insights), header with the user's email and logout, content area.
+- App shell: left sidebar with the logo and nav (Employees, Insights), a header whose user initial opens a menu with the email and Log out, and a content area that never scrolls as a whole: each page decides which panel scrolls.
 - Designed for laptops (≥1280 px), usable down to tablet. Phones aren't a goal.
 
 ### Patterns
@@ -135,6 +136,7 @@ A work tool for someone who looks at numbers all day. It should feel **calm, den
 | Delete | `AlertDialog` that names the employee |
 | Feedback | Own `Toast` for success; inline alert for page-level errors |
 | Loading | `Skeleton` rows, never a blank screen |
+| Table cells | Header row tinted (`bg-muted`), small uppercase labels. Employee numbers muted monospace; departments as outlined chips. No avatars in rows |
 | Empty state | Short message plus the next action ("No employees match these filters. Clear filters.") |
 | Insights | `Table` first, then `BarList` bars labelled with the value |
 

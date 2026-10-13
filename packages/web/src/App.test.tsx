@@ -1,13 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { LoginRequest, SessionUser } from "@smt/shared/api-types";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import type { Employee, LoginRequest, Page, SessionUser } from "@smt/shared/api-types";
 import { api, ApiError } from "@/lib/api";
 
 const login = mock<(request: LoginRequest) => Promise<SessionUser>>(() => Promise.resolve({ email: "hr@acme.test" }));
 const getMe = mock<() => Promise<SessionUser>>();
 const logout = mock<() => Promise<void>>(() => Promise.resolve());
 void mock.module("./features/auth/auth.api", () => ({ login, getMe, logout }));
+const employee: Employee = {
+  id: 1,
+  employeeNumber: "E00001",
+  firstName: "Priya",
+  lastName: "Sharma",
+  jobTitle: "Software Engineer",
+  department: "Engineering",
+  country: "IN",
+  salaryMinor: 300_000_000,
+  currency: "INR",
+  hiredAt: "2020-01-15",
+};
+const listEmployees = mock<() => Promise<Page<Employee>>>(() =>
+  Promise.resolve({ items: [employee], total: 1, page: 1, pageSize: 50 }),
+);
+const getFilterOptions = mock(() => Promise.resolve({ countries: [], departments: [], jobTitles: [] }));
+void mock.module("./features/employees/employees.api", () => ({ listEmployees, getFilterOptions }));
 const { App } = await import("./App");
+
+// The email and Log out live in a menu behind the user's initial in the header.
+async function openAccountMenu() {
+  fireEvent.keyDown(await screen.findByRole("button", { name: "Account menu" }), { key: "Enter" });
+  return screen.findByRole("menu");
+}
 
 const notLoggedIn = () => Promise.reject(new ApiError(401, "unauthenticated", "Please log in"));
 
@@ -32,7 +55,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "demo-password" } });
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect((await screen.findByRole("banner")).textContent).toContain("hr@acme.test");
+    expect((await openAccountMenu()).textContent).toContain("hr@acme.test");
     expect(screen.queryByLabelText("Password")).toBeNull();
   });
 
@@ -41,8 +64,19 @@ describe("App", () => {
 
     render(<App />);
 
-    expect((await screen.findByRole("banner")).textContent).toContain("hr@acme.test");
+    expect((await openAccountMenu()).textContent).toContain("hr@acme.test");
     expect(screen.queryByLabelText("Password")).toBeNull();
+  });
+
+  it("shows the employee list, with Employees in the navigation, once logged in", async () => {
+    getMe.mockImplementation(loggedIn);
+
+    render(<App />);
+
+    const nav = await screen.findByRole("navigation");
+    expect(within(nav).getByText("Employees")).toBeDefined();
+    expect(await screen.findByRole("table")).toBeDefined();
+    expect(listEmployees).toHaveBeenCalled();
   });
 
   it("shows a loading placeholder while the session is being checked", () => {
@@ -53,11 +87,11 @@ describe("App", () => {
     expect(screen.getByRole("status", { name: "Loading" })).toBeDefined();
   });
 
-  it("logs out and returns to the login form when Log out is clicked", async () => {
+  it("logs out from the account menu and returns to the login form", async () => {
     getMe.mockImplementation(loggedIn);
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
+    fireEvent.click(within(await openAccountMenu()).getByRole("menuitem", { name: "Log out" }));
 
     expect(await screen.findByLabelText("Password")).toBeDefined();
     expect(logout).toHaveBeenCalledTimes(1);

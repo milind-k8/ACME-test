@@ -61,7 +61,7 @@ packages/server/
     ├── seed/
     │   ├── generate-employees.ts     pure + deterministic: (count, seed) → employees[]
     │   ├── random.ts                 seeded PRNG
-    │   ├── data.ts                   name / title / department / country lists, FX snapshot
+    │   ├── data.ts                   name / title / department / country lists
     │   └── seed.ts                   CLI: open DB, wipe, insert in one transaction
     └── test-support/
         └── test-server.ts            startTestServer() → { url, db, loginCookie, stop }
@@ -91,6 +91,7 @@ Enforced by ESLint `no-restricted-imports`.
 
 - **Schema changes** are new numbered migration files, run at startup. Never edit an old one. The plan lists the migrations each slice adds.
 - **Money columns**: `salary_minor INTEGER` + `currency` with a foreign key to `fx_rates`.
+- **FX snapshot** rows are inserted by a migration, so `fx_rates` exists in every database, tests included. Updating the rates is a new numbered migration, which also records when they changed.
 - **Every table is `STRICT`.** By default SQLite stores whatever you give it (the string `"abc"` in an `INTEGER` column is accepted). `STRICT` rejects a wrong type with an error, so a bug can't quietly write a float or a string into `salary_minor`.
   - Allowed column types are `INTEGER`, `REAL`, `TEXT`, `BLOB`. SQLite's `ANY` column type is not used, for the same reason as no `any` in TypeScript. Dates are `TEXT` (ISO 8601). Booleans are `INTEGER` with `CHECK (col IN (0, 1))`.
   - Virtual tables (`employees_fts`) can't be `STRICT`. They only hold copies of `TEXT` columns, so nothing is lost.
