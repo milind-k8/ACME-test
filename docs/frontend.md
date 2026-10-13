@@ -12,13 +12,13 @@ How to build the UI. Read [development-process.md](development-process.md) first
 | Components | shadcn/ui (Radix) in `components/ui/` | Code lives in the repo; Radix handles focus, keyboard, ARIA |
 | Routing | Tiny History-API router in `lib/router.ts` | Three screens don't need `react-router`. Filters live in the URL query string |
 | Forms | Plain `<form>` + native HTML validation | `required`, `min`, `type="date"` for instant feedback; server errors shown per field |
-| Charts | CSS bars (`BarList.tsx`) | No chart library |
+| Charts | Recharts via shadcn `Chart` | [ADR-006](adrs/006-recharts-for-dashboard-charts.md). Data shaped on the server; chart components only draw |
 | Tests | `bun test` + `@testing-library/react` + `happy-dom` | |
 
 **shadcn components used:** `Button`, `Input`, `Label`, `Select`, `Table`, `DropdownMenu`, `Dialog`, `AlertDialog`, `Card`, `Badge`, `Skeleton`. The CLI adds an unrelated `cn` package, the `radix-ui` umbrella package, and `lucide-react` imports: remove them, install the single `@radix-ui/react-*` package pinned exact, and use `components/icons/`.
-**Not used** (they pull in extra libraries): `Form` (react-hook-form + zod), `Chart` (Recharts), `Sonner`, the TanStack data-table.
+**Not used** (they pull in extra libraries): `Form` (react-hook-form + zod), `Sonner`, the TanStack data-table. `Chart` is used since ADR-006.
 
-**Allowed dependencies:** `react`, `react-dom`, `@sentry/react` ([ADR-004](adrs/004-sentry-error-monitoring.md)), shadcn's peers (`@radix-ui/*` per component, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`). Dev: `tailwindcss`, `bun-plugin-tailwind`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `@testing-library/dom` (its required peer), `@happy-dom/global-registrator`.
+**Allowed dependencies:** `react`, `react-dom`, `recharts` + `react-is` ([ADR-006](adrs/006-recharts-for-dashboard-charts.md)), `@sentry/react` ([ADR-004](adrs/004-sentry-error-monitoring.md)), shadcn's peers (`@radix-ui/*` per component, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`). Dev: `tailwindcss`, `bun-plugin-tailwind`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `@testing-library/dom` (its required peer), `@happy-dom/global-registrator`.
 
 ## Folder layout
 
@@ -40,7 +40,7 @@ packages/web/src/
 │   ├── LogoMark.tsx        the "ASM" brand mark
 │   ├── AppShell.tsx        nav + header + content
 │   ├── Toast.tsx
-│   └── BarList.tsx         CSS horizontal bar chart
+│   ├── FilterBar.tsx       country / department / job-title selects (+ optional search), shared by both pages
 └── features/
     ├── auth/               LoginPage.tsx, useSession.ts, auth.api.ts, auth.constants.ts (page copy)
     ├── employees/
@@ -50,7 +50,7 @@ packages/web/src/
     │   ├── EmployeeFormDialog.tsx
     │   ├── DeleteEmployeeDialog.tsx
     │   └── employees.api.ts        typed calls: listEmployees(), createEmployee()…
-    └── insights/           InsightsPage.tsx, CountryInsightsTable.tsx, insights.api.ts
+    └── dashboard/          DashboardPage.tsx, StatTile.tsx, PayTable.tsx, chart components, dashboard.api.ts
 ```
 
 ## Import rules
@@ -140,7 +140,7 @@ A work tool for someone who looks at numbers all day. It should feel **calm, den
 | Loading | `Skeleton` rows, never a blank screen |
 | Table cells | Header row tinted (`bg-muted`), small uppercase labels. Employee numbers muted monospace; departments as outlined chips. No avatars in rows |
 | Empty state | Short message plus the next action ("No employees match these filters. Clear filters.") |
-| Insights | `Table` first, then `BarList` bars labelled with the value |
+| Dashboard | Stat tiles, then charts beside the tables they summarise. Every chart has a text alternative (a table or an `sr-only` summary) |
 
 ### Money display
 

@@ -8,6 +8,7 @@ export const API_ROUTES = {
   employee: "/api/employees/:id",
   employeeFilters: "/api/employees/filters",
   employeeFormOptions: "/api/employees/form-options",
+  dashboard: "/api/dashboard",
 } as const;
 
 export function employeePath(id: number): string {

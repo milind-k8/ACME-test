@@ -35,13 +35,6 @@ export const PAGINATION_COPY = {
   next: "Next",
 } as const;
 
-export const FILTER_COPY = {
-  search: { label: "Search by name" },
-  country: { label: "Country", all: "All countries" },
-  department: { label: "Department", all: "All departments" },
-  jobTitle: { label: "Job title", all: "All job titles" },
-} as const;
-
 export const FORM_COPY = {
   addTitle: "Add employee",
   editTitle: (e: { firstName: string; lastName: string; employeeNumber: string }) =>

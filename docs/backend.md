@@ -54,10 +54,10 @@ packages/server/
     │   ├── employees.routes.ts
     │   ├── employees.repository.ts   list(filters), get, create, update, remove
     │   └── validate-employee.ts      pure: input → { ok, value } | { ok: false, errors }
-    ├── insights/
-    │   ├── insights.routes.ts
-    │   ├── insights.repository.ts    aggregate SQL (GROUP BY, USD conversion join)
-    │   └── median.ts                 pure
+    ├── dashboard/
+    │   ├── dashboard.routes.ts
+    │   ├── dashboard.repository.ts   one filtered query: USD-converted, sorted by salary (ADR-007)
+    │   └── summarize.ts              pure: groups, medians, bands, hires, tenure
     ├── seed/
     │   ├── generate-employees.ts     pure + deterministic: (count, seed) → employees[]
     │   ├── random.ts                 seeded PRNG
@@ -194,8 +194,8 @@ Name search uses **SQLite FTS5**, which is built into SQLite, so no dependency i
 
 ### Aggregates and median
 
-- `MIN`, `MAX`, `AVG`, `COUNT`, and `GROUP BY` run in SQL, with USD conversion as a join to `fx_rates`.
-- SQLite has no median function, so the repository returns USD values sorted per group, and `median.ts` picks the middle value. That's well under 10 ms at this size.
+- **Dashboard:** one filtered query converts to USD and sorts by salary in SQL; `dashboard/summarize.ts` groups the rows in one pass and reads each median from the sorted lists. Measured faster than window-function medians or per-dimension `GROUP BY` on embedded SQLite; see [ADR-007](adrs/007-dashboard-aggregation.md).
+- SQLite has no median function. The sorted single query above gives every group's values already in order, so the median is the middle element.
 - If the data grows to millions of rows, precompute the stats rather than computing them per request.
 
 If SQLite is outgrown, only `*.repository.ts` and `db/` touch the database.

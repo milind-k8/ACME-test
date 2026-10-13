@@ -1,10 +1,14 @@
-import { EMPLOYEE_SORTS, SORT_ORDERS, type EmployeeSort, type SortOrder } from "@smt/shared/api-types";
+import {
+  EMPLOYEE_FILTERS,
+  EMPLOYEE_SORTS,
+  SORT_ORDERS,
+  type EmployeeFilters,
+  type EmployeeSort,
+  type SortOrder,
+} from "@smt/shared/api-types";
 import { DEFAULT_PAGE_SIZE, EMPLOYEE_MESSAGES, MAX_PAGE_SIZE } from "./employees.constants";
 
-export const EMPLOYEE_FILTERS = ["country", "department", "jobTitle"] as const;
-export type EmployeeFilter = (typeof EMPLOYEE_FILTERS)[number];
-
-export interface EmployeeListQuery extends Partial<Record<EmployeeFilter, string>> {
+export interface EmployeeListQuery extends EmployeeFilters {
   page: number;
   pageSize: number;
   q?: string;

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { SessionUser } from "@smt/shared/api-types";
+import { ChartIcon } from "@/components/icons/ChartIcon";
 import { UsersIcon } from "@/components/icons/UsersIcon";
 import { LogoMark } from "@/components/LogoMark";
 import {
@@ -10,6 +11,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { navigate } from "@/lib/router";
+import { cn } from "@/lib/utils";
+
+// Screens, in sidebar order. App.tsx picks the page for the current path.
+export const PATHS = { dashboard: "/", employees: "/employees" } as const;
+const NAV_ITEMS = [
+  { path: PATHS.dashboard, label: "Dashboard", Icon: ChartIcon },
+  { path: PATHS.employees, label: "Employees", Icon: UsersIcon },
+] as const;
 
 const SHELL_COPY = {
   accountMenu: "Account menu",
@@ -19,10 +29,12 @@ const SHELL_COPY = {
 
 export function AppShell({
   user,
+  activePath,
   onLogout,
   children,
 }: {
   user: SessionUser;
+  activePath: string;
   onLogout: () => void;
   children: ReactNode;
 }) {
@@ -34,15 +46,29 @@ export function AppShell({
           <h1 className="text-sm leading-tight font-semibold">ACME Salary Management</h1>
         </div>
         <nav className="flex flex-col gap-1 p-3">
-          {/* One screen for now; the router arrives with Insights. */}
-          <a
-            href="/"
-            aria-current="page"
-            className="flex items-center gap-3 rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-foreground"
-          >
-            <UsersIcon className="size-4 text-primary" />
-            Employees
-          </a>
+          {NAV_ITEMS.map(({ path, label, Icon }) => {
+            const current = path === activePath;
+            return (
+              <a
+                key={path}
+                href={path}
+                aria-current={current ? "page" : undefined}
+                onClick={(event) => {
+                  // Client-side navigation; a modified click (new tab, etc.) keeps the browser's default.
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+                  event.preventDefault();
+                  navigate(path);
+                }}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground",
+                  current ? "bg-primary/10" : "hover:bg-muted",
+                )}
+              >
+                <Icon className={cn("size-4", current ? "text-primary" : "text-muted-foreground")} />
+                {label}
+              </a>
+            );
+          })}
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
