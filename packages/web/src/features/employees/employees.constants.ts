@@ -10,6 +10,8 @@ export const EMPLOYEE_COLUMNS = {
 } as const;
 
 export const EMPLOYEE_COPY = {
+  title: "Employees",
+  subtitle: "Everyone on the payroll, paid in their own currency.",
   loading: "Loading employees",
   retry: "Retry",
   noMatches: "No employees match these filters.",

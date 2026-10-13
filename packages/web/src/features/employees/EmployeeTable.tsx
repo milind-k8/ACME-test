@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { formatCountry, formatMoney } from "@/lib/format";
 import { EMPLOYEE_COLUMNS } from "./employees.constants";
 
+const HEAD = "text-xs font-medium tracking-wide text-muted-foreground uppercase";
+
 interface EmployeeTableProps {
   employees: Employee[];
   /** Undefined when no column is the sort, e.g. search results in best-match order. */
@@ -15,12 +17,12 @@ interface EmployeeTableProps {
 export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableProps) {
   const sortable = (column: EmployeeSort, label: string, className?: string) => (
     <TableHead
-      className={className}
+      className={cn(HEAD, className)}
       aria-sort={sort !== column ? "none" : order === "asc" ? "ascending" : "descending"}
     >
       <button
         type="button"
-        className={cn("inline-flex items-center gap-1 font-medium hover:underline", className)}
+        className={cn("inline-flex items-center gap-1 uppercase hover:text-foreground", className)}
         onClick={() => {
           onSort(column);
         }}
@@ -35,12 +37,12 @@ export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableP
 
   return (
     <Table containerClassName="min-h-0 flex-1 overflow-y-auto">
-      <TableHeader className="sticky top-0 z-10 bg-background">
+      <TableHeader className="sticky top-0 z-10 bg-muted shadow-xs">
         <TableRow>
-          <TableHead>{EMPLOYEE_COLUMNS.employeeNumber}</TableHead>
+          <TableHead className={HEAD}>{EMPLOYEE_COLUMNS.employeeNumber}</TableHead>
           {sortable("name", EMPLOYEE_COLUMNS.name)}
-          <TableHead>{EMPLOYEE_COLUMNS.jobTitle}</TableHead>
-          <TableHead>{EMPLOYEE_COLUMNS.department}</TableHead>
+          <TableHead className={HEAD}>{EMPLOYEE_COLUMNS.jobTitle}</TableHead>
+          <TableHead className={HEAD}>{EMPLOYEE_COLUMNS.department}</TableHead>
           {sortable("country", EMPLOYEE_COLUMNS.country)}
           {sortable("salary", EMPLOYEE_COLUMNS.salary, "text-right")}
           {sortable("hiredAt", EMPLOYEE_COLUMNS.hiredAt)}
@@ -49,10 +51,12 @@ export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableP
       <TableBody>
         {employees.map((e) => (
           <TableRow key={e.id}>
-            <TableCell className="tabular-nums">{e.employeeNumber}</TableCell>
-            <TableCell>{`${e.firstName} ${e.lastName}`}</TableCell>
+            <TableCell className="font-mono text-xs text-muted-foreground">{e.employeeNumber}</TableCell>
+            <TableCell className="font-medium">{`${e.firstName} ${e.lastName}`}</TableCell>
             <TableCell>{e.jobTitle}</TableCell>
-            <TableCell>{e.department}</TableCell>
+            <TableCell>
+              <span className="rounded-full border px-2 py-0.5 text-xs font-medium">{e.department}</span>
+            </TableCell>
             <TableCell>{formatCountry(e.country)}</TableCell>
             <TableCell className="text-right tabular-nums">{formatMoney(e.salaryMinor, e.currency)}</TableCell>
             <TableCell className="tabular-nums">{e.hiredAt}</TableCell>

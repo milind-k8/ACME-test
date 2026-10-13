@@ -26,6 +26,12 @@ const getFilterOptions = mock(() => Promise.resolve({ countries: [], departments
 void mock.module("./features/employees/employees.api", () => ({ listEmployees, getFilterOptions }));
 const { App } = await import("./App");
 
+// The email and Log out live in a menu behind the user's initial in the header.
+async function openAccountMenu() {
+  fireEvent.keyDown(await screen.findByRole("button", { name: "Account menu" }), { key: "Enter" });
+  return screen.findByRole("menu");
+}
+
 const notLoggedIn = () => Promise.reject(new ApiError(401, "unauthenticated", "Please log in"));
 
 const realFetch = globalThis.fetch;
@@ -49,7 +55,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "demo-password" } });
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect((await screen.findByRole("banner")).textContent).toContain("hr@acme.test");
+    expect((await openAccountMenu()).textContent).toContain("hr@acme.test");
     expect(screen.queryByLabelText("Password")).toBeNull();
   });
 
@@ -58,7 +64,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect((await screen.findByRole("banner")).textContent).toContain("hr@acme.test");
+    expect((await openAccountMenu()).textContent).toContain("hr@acme.test");
     expect(screen.queryByLabelText("Password")).toBeNull();
   });
 
@@ -81,11 +87,11 @@ describe("App", () => {
     expect(screen.getByRole("status", { name: "Loading" })).toBeDefined();
   });
 
-  it("logs out and returns to the login form when Log out is clicked", async () => {
+  it("logs out from the account menu and returns to the login form", async () => {
     getMe.mockImplementation(loggedIn);
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
+    fireEvent.click(within(await openAccountMenu()).getByRole("menuitem", { name: "Log out" }));
 
     expect(await screen.findByLabelText("Password")).toBeDefined();
     expect(logout).toHaveBeenCalledTimes(1);

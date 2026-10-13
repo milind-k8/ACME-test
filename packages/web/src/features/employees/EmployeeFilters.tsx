@@ -1,4 +1,5 @@
 import type { EmployeeFilterOptions } from "@smt/shared/api-types";
+import { SearchIcon } from "@/components/icons/SearchIcon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,18 +27,21 @@ export function EmployeeFilters({ options, value, onChange, search, onSearchChan
     { name: "jobTitle", values: options.jobTitles },
   ];
   return (
-    <div className="flex flex-wrap items-end gap-4">
+    <div className="flex flex-wrap items-end gap-4 rounded-lg border bg-background p-4 shadow-xs">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="employee-search">{FILTER_COPY.search.label}</Label>
-        <Input
-          id="employee-search"
-          type="search"
-          className="w-64"
-          value={search}
-          onChange={(event) => {
-            onSearchChange(event.target.value);
-          }}
-        />
+        <div className="relative">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            id="employee-search"
+            type="search"
+            className="w-64 pl-9"
+            value={search}
+            onChange={(event) => {
+              onSearchChange(event.target.value);
+            }}
+          />
+        </div>
       </div>
       {fields.map(({ name, values, display = (v) => v }) => {
         const id = `filter-${name}`;

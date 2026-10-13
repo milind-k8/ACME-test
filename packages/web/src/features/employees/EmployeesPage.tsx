@@ -101,6 +101,10 @@ export function EmployeesPage() {
   return (
     // Filters and pagination stay put; only the table area scrolls.
     <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">{EMPLOYEE_COPY.title}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{EMPLOYEE_COPY.subtitle}</p>
+      </div>
       {options && (
         <EmployeeFilters
           options={options}
@@ -145,17 +149,17 @@ export function EmployeesPage() {
       {state.status === "ready" && state.page.total > 0 && (
         <>
           {/* A flex column, so the table container can take the remaining height without a percentage. */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background shadow-xs">
             <EmployeeTable employees={state.page.items} sort={sort} order={order} onSort={changeSort} />
+            <Pagination
+              page={state.page.page}
+              pageSize={state.page.pageSize}
+              total={state.page.total}
+              onPageChange={(next) => {
+                setParams({ page: next > 1 ? String(next) : undefined });
+              }}
+            />
           </div>
-          <Pagination
-            page={state.page.page}
-            pageSize={state.page.pageSize}
-            total={state.page.total}
-            onPageChange={(next) => {
-              setParams({ page: next > 1 ? String(next) : undefined });
-            }}
-          />
         </>
       )}
     </div>

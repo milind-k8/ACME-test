@@ -14,7 +14,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
   const first = Math.min((page - 1) * pageSize + 1, total);
   const last = Math.min(page * pageSize, total);
   return (
-    <div className="flex items-center justify-between gap-4 py-3 text-sm">
+    <div className="flex shrink-0 items-center justify-between gap-4 border-t px-4 py-3 text-sm">
       <span className="text-muted-foreground tabular-nums">
         {PAGINATION_COPY.showing(count.format(first), count.format(last), count.format(total))}
       </span>
