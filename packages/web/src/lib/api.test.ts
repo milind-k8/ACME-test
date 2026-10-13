@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
-import { api, ApiError } from "./api";
+import { api, ApiError, onUnauthorized } from "./api";
 
 const realFetch = globalThis.fetch;
 
@@ -63,5 +63,49 @@ describe("api", () => {
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
     });
+  });
+
+  it("resolves to undefined for a 204 No Content response", async () => {
+    stubFetch(new Response(null, { status: 204 }));
+
+    const result: unknown = await api("/api/logout", { method: "POST" });
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("onUnauthorized", () => {
+  const unauthenticated = () =>
+    Response.json({ error: { code: "unauthenticated", message: "Please log in" } }, { status: 401 });
+
+  it("notifies listeners when any API call is answered with 401", async () => {
+    const listener = mock();
+    const unsubscribe = onUnauthorized(listener);
+    stubFetch(unauthenticated());
+
+    await api("/api/employees").catch(() => undefined);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it("does not notify for a 401 from /api/login (that is a wrong password, not an expired session)", async () => {
+    const listener = mock();
+    const unsubscribe = onUnauthorized(listener);
+    stubFetch(Response.json({ error: { code: "invalid_credentials", message: "Email or password is incorrect" } }, { status: 401 }));
+
+    await api("/api/login").catch(() => undefined);
+
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("stops notifying after unsubscribe", async () => {
+    const listener = mock();
+    onUnauthorized(listener)();
+    stubFetch(unauthenticated());
+
+    await api("/api/employees").catch(() => undefined);
+
+    expect(listener).not.toHaveBeenCalled();
   });
 });
