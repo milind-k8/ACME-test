@@ -34,8 +34,8 @@ export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableP
   );
 
   return (
-    <Table>
-      <TableHeader className="sticky top-0 bg-background">
+    <Table containerClassName="min-h-0 flex-1 overflow-y-auto">
+      <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead>{EMPLOYEE_COLUMNS.employeeNumber}</TableHead>
           {sortable("name", EMPLOYEE_COLUMNS.name)}

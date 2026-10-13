@@ -99,7 +99,8 @@ export function EmployeesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    // Filters and pagination stay put; only the table area scrolls.
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {options && (
         <EmployeeFilters
           options={options}
@@ -143,7 +144,10 @@ export function EmployeesPage() {
       )}
       {state.status === "ready" && state.page.total > 0 && (
         <>
-          <EmployeeTable employees={state.page.items} sort={sort} order={order} onSort={changeSort} />
+          {/* A flex column, so the table container can take the remaining height without a percentage. */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
+            <EmployeeTable employees={state.page.items} sort={sort} order={order} onSort={changeSort} />
+          </div>
           <Pagination
             page={state.page.page}
             pageSize={state.page.pageSize}

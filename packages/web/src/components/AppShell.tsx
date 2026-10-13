@@ -12,8 +12,8 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b px-6 py-3">
+    <div className="flex h-screen flex-col">
+      <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
         <h1 className="text-lg font-semibold">ACME Salary Management</h1>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">{user.email}</span>
@@ -22,14 +22,15 @@ export function AppShell({
           </Button>
         </div>
       </header>
-      <div className="flex flex-1">
+      <div className="flex min-h-0 flex-1">
         <nav className="w-48 shrink-0 border-r p-4">
           {/* One screen for now; the router arrives with Insights. */}
           <a href="/" aria-current="page" className="block rounded-md bg-muted px-3 py-2 text-sm font-medium">
             Employees
           </a>
         </nav>
-        <main className="min-w-0 flex-1 p-6">{children}</main>
+        {/* Pages fill the remaining height and decide what scrolls inside it. */}
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col p-6">{children}</main>
       </div>
     </div>
   );
