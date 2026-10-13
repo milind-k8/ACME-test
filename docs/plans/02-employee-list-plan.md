@@ -155,20 +155,50 @@ The seed is part of Slice 1: it's the only way rows get into the database until 
   - `EmployeesPage`: same column toggles order, a new column starts at `asc`; written to the URL.
 - **Libraries added:** none.
 - **Test list:**
-  - [ ] unit `validate-list-query`: unknown `sort` → error · `order=up` → error
-  - [ ] integration `employees.routes`: `sort=salary` puts a ¥6,500,000 employee below a $150,000 one · ties stable across pages (no row repeated or missed between page 1 and 2)
-  - [ ] component `EmployeeTable`: clicking a header calls `onSort` · `aria-sort` reflects the current order · Salary header text
+  - [x] unit `validate-list-query`: unknown `sort` → error · `order=up` → error
+  - [x] integration `employees.routes`: `sort=salary` puts a ¥6,500,000 employee below a $150,000 one · ties stable across pages (no row repeated or missed between page 1 and 2)
+  - [x] component `EmployeeTable`: clicking a header calls `onSort` · `aria-sort` reflects the current order · Salary header text
 - **Quality checks:** sort column never comes from user input directly
 
 ## Performance
-- [ ] integration: seed 10,000 via `generateEmployees` into `:memory:`, run a matrix of filter / search / sort combinations, assert each `listEmployees` call < 50 ms (median of 5 runs, to avoid flaky one-off spikes).
+- [x] integration: seed 10,000 via `generateEmployees` into `:memory:`, run a matrix of filter / search / sort combinations, assert each `listEmployees` call < 50 ms (median of 5 runs, to avoid flaky one-off spikes).
 
 ## Decisions
 1. **Select component:** shadcn `Select` (adds `@radix-ui/react-select`), as frontend.md lists.
 2. **FX snapshot** lives in migration `002_employees.sql`, so `fx_rates` exists in every database. A rate update is a new numbered migration. backend.md updated to match.
 
 ## As built
-_Filled in after the build._
+
+Built on branch `feat/employee-list` across all five slices. `bun run check` passes with 149 server and 44 web tests, a production build, and no vulnerabilities. Every list query runs in about 1 ms at 10,000 rows (budget 50 ms).
+
+**Files**
+- shared: `api-routes.ts` (`employees`, `employeeFilters`), `api-types.ts` (`Employee`, `NewEmployee`, `Page<T>`, `EmployeeFilterOptions`, `EMPLOYEE_SORTS`, `SORT_ORDERS`)
+- server:
+  - `db/migrations/002_employees.sql`, `003_employee_indexes.sql`, `004_employees_fts.sql`
+  - `seed/random.ts`, `seed/data.ts`, `seed/generate-employees.ts`, `seed/seed.ts`
+  - `employees/employees.constants.ts`, `validate-list-query.ts`, `to-fts-query.ts`, `employees.repository.ts` (`listEmployees`, `listFilterOptions`, `replaceAllEmployees`), `employees.routes.ts`
+  - `employees/employees.performance.test.ts`; `routes.ts` registers the employee routes
+- web:
+  - `lib/format.ts` (`formatMoney`, `formatCountry`), `lib/router.ts` (`useQueryParams` only)
+  - `components/ui/{table,select}.tsx`, `components/icons/{ChevronDownIcon,ChevronUpIcon}.tsx`, `AppShell.tsx` (nav + children)
+  - `features/employees/{EmployeesPage,EmployeeTable,EmployeeFilters,Pagination}.tsx`, `employees.api.ts`, `employees.constants.ts`
+- wiring: `seed` scripts in the root and server `package.json`; `happy-dom.ts` registers with `http://localhost/` so `history.pushState` works in tests.
+
+**Migrations:** `002_employees.sql` (with the FX snapshot), `003_employee_indexes.sql`, `004_employees_fts.sql`, as planned.
+
+**Libraries:** web `@radix-ui/react-select` 2.4.1, pinned exact.
+
+**Differences from the plan, and why**
+- **Seed salaries use a per-country `payMultiplier`** (local currency per USD of base pay) instead of the FX snapshot. The generator is pure and the rates live in a migration, so it can't read them. "Every seeded currency is in `fx_rates`" is proven by the repository test instead: 10,000 generated rows insert under the foreign key.
+- **`NewEmployee` is in `@smt/shared`**, not local to the server. backend.md lets repositories import only `bun:sqlite` and `shared/`, and spec 03's create request needs the same type.
+- **`total` comes from a separate `COUNT(*)`** instead of `COUNT(*) OVER()`. A window value disappears on an empty page, and the separate count gives the real total on a page past the end with no special case.
+- **No `random.int`/`pick` on the PRNG.** The generator only needed `next()`, with a local `pick`.
+- **`sort` and `order` are optional in the query.** Without a sort, a search returns best match first (`bm25`) and the table marks no column; otherwise it's alphabetical by name.
+- **Changing the sort goes back to page 1**, like a filter change. The spec didn't say; page N of a new order is arbitrary.
+- **"Clear filters" also clears the search text**, since an empty result can come from either.
+- **Stale responses are dropped with a flag in the effect cleanup** rather than an `AbortController`. An aborted `fetch` surfaces from `lib/api.ts` as a network `ApiError`, which would flash the error alert; ignoring the late result is simpler and has a test.
+- **Icons:** shadcn's `Select` imports `lucide-react`, which isn't installed. It uses local `ChevronDownIcon`/`ChevronUpIcon`/`CheckIcon` from `components/icons/` instead; `CheckIcon` gained an optional `className`.
+- **The query-plan test matches the table alias** (`SCAN e`) as well as `SCAN employees`. Once the list query aliased the table, the original check silently passed with an index removed.
 
 ---
 - [x] Reviewed

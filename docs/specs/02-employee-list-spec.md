@@ -53,16 +53,16 @@ The HR manager sees all employees in a paged table and finds people by name, cou
 - [x] The search text is kept in the URL
 
 ## Slice 5: Sorting
-- [ ] `?sort=` accepts `name`, `salary`, `hiredAt`, `country`; any other value returns `400` `validation`
-- [ ] `?order=` accepts `asc` or `desc`; any other value returns `400` `validation`
-- [ ] Sorting by `salary` orders by USD value (¥6,500,000 ranks below $150,000)
-- [ ] Employees with equal sort values come back in a stable order across pages (ties broken by `id`)
-- [ ] Clicking a sortable column header sorts by it, and clicking again reverses the order
-- [ ] The Salary header reads "Salary · sorted in USD"
-- [ ] The sort is kept in the URL
+- [x] `?sort=` accepts `name`, `salary`, `hiredAt`, `country`; any other value returns `400` `validation`
+- [x] `?order=` accepts `asc` or `desc`; any other value returns `400` `validation`
+- [x] Sorting by `salary` orders by USD value (¥6,500,000 ranks below $150,000)
+- [x] Employees with equal sort values come back in a stable order across pages (ties broken by `id`)
+- [x] Clicking a sortable column header sorts by it, and clicking again reverses the order
+- [x] The Salary header reads "Salary · sorted in USD"
+- [x] The sort is kept in the URL
 
 ## Performance
-- [ ] With the 10,000-employee seed, the list query with any filter, search, or sort combination runs in under 50 ms
+- [x] With the 10,000-employee seed, the list query with any filter, search, or sort combination runs in under 50 ms
 
 ## API shape (indicative)
 ```
