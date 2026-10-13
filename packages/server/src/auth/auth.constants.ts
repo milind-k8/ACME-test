@@ -18,4 +18,8 @@ export const AUTH_MESSAGES = {
   invalidLoginRequest: "Invalid login request",
   unauthenticated: "Please log in",
   required: "is required",
+  tooManyAttempts: "Too many login attempts. Try again in 15 minutes.",
 } as const;
+
+// ADR-003: failed logins per client before it has to wait, and for how long.
+export const LOGIN_LIMITS = { maxFailures: 5, windowMs: 15 * 60_000, maxClients: 10_000 } as const;

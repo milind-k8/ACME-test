@@ -3,6 +3,7 @@ export const ERROR_CODES = {
   validation: "validation",
   invalidCredentials: "invalid_credentials",
   unauthenticated: "unauthenticated",
+  tooManyAttempts: "too_many_attempts",
   notFound: "not_found",
   internal: "internal",
 } as const;

@@ -58,4 +58,15 @@ describe("LoginPage", () => {
       expect(screen.getByRole<HTMLButtonElement>("button", { name: "Log in" }).disabled).toBe(false);
     });
   });
+
+  it("shows the rate-limit message when there have been too many attempts", async () => {
+    login.mockImplementationOnce(() =>
+      Promise.reject(new ApiError(429, "too_many_attempts", "Too many login attempts. Try again in 15 minutes.")),
+    );
+    render(<LoginPage onLoggedIn={mock()} />);
+
+    fillAndSubmit("hr@acme.test", "wrong-password");
+
+    expect((await screen.findByRole("alert")).textContent).toBe("Too many login attempts. Try again in 15 minutes.");
+  });
 });

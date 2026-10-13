@@ -94,3 +94,13 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
   - The Median and Average labels collided in the same band, and the histogram's axis labels ran together; it merged the markers and shortened the ticks.
   - shadcn's chart file failed the strict lint; it trimmed it to what's used rather than loosening the lint.
   - The shadcn CLI again added `cn`, `lucide-react`, an unrequested `card.tsx`, and an unpinned older Recharts; all removed or pinned.
+
+## Login rate limiting (2026-10-13)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** continue after the dashboard. The AI picked login rate limiting before the nice-to-haves because ADR-003 requires it before real data goes in.
+- **Design points it raised and I approved:** count failures only; refuse even the right password while limited, so a guess can't be confirmed; key by client address, not by account, so nobody can lock the only HR user out on purpose.
+- **Behind the proxy:** every request reaches the API from Caddy, so keying on the connection address would put all users in one bucket. With `TRUST_PROXY=true` (Compose only) the API uses the last `X-Forwarded-For` entry, the one Caddy adds; earlier entries can be forged. Checked in Docker with spoofed headers.
+- **Built test-first** with an injected clock, so the 15-minute window is tested without waiting.
+- **AI corrections:** a formatter run touched three unrelated auth test files; it restored them so the diff only holds the change.
