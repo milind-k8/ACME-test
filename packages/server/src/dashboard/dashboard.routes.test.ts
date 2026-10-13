@@ -31,6 +31,16 @@ afterEach(async () => {
   await server.stop();
 });
 
+// Stats for a group of one employee.
+const one = (usdCents: number) => ({
+  headcount: 1,
+  payrollUsdCents: usdCents,
+  minUsdCents: usdCents,
+  medianUsdCents: usdCents,
+  avgUsdCents: usdCents,
+  maxUsdCents: usdCents,
+});
+
 const getDashboard = (query = "", cookie = server.loginCookie) =>
   fetch(`${server.url}/api/dashboard${query}`, { headers: { Cookie: cookie } });
 
@@ -51,6 +61,12 @@ describe("GET /api/dashboard", () => {
         hiresLast12Months: 1,
         avgTenureYears: 5.2,
       },
+      // One employee each, so ties sort alphabetically.
+      byCountry: [
+        { country: "IN", ...one(3_600_000) },
+        { country: "JP", ...one(4_355_000) },
+        { country: "US", ...one(15_000_000) },
+      ],
     });
   });
 

@@ -5,7 +5,7 @@ import type { Config } from "../config";
 import { json } from "../http/responses";
 import { withAuth } from "../http/with-auth";
 import { fxAsOf, listPay } from "./dashboard.repository";
-import { summarize } from "./summarize";
+import { groupBy, summarize } from "./summarize";
 
 export function dashboardRoutes(db: Database, config: Config, now: () => Date) {
   return {
@@ -13,7 +13,12 @@ export function dashboardRoutes(db: Database, config: Config, now: () => Date) {
       GET: withAuth(config, now, () => {
         // Today on the server's (injectable) clock, in UTC.
         const today = now().toISOString().slice(0, 10);
-        const dashboard: Dashboard = { fxAsOf: fxAsOf(db), summary: summarize(listPay(db), today) };
+        const rows = listPay(db);
+        const dashboard: Dashboard = {
+          fxAsOf: fxAsOf(db),
+          summary: summarize(rows, today),
+          byCountry: groupBy(rows, "country"),
+        };
         return json(dashboard);
       }),
     },

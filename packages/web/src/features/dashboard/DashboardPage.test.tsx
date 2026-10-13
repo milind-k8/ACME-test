@@ -15,6 +15,17 @@ const dashboard: Dashboard = {
     hiresLast12Months: 612,
     avgTenureYears: 8.3,
   },
+  byCountry: [
+    {
+      country: "IN",
+      headcount: 1_260,
+      payrollUsdCents: 6_048_000_000,
+      minUsdCents: 1_200_000,
+      medianUsdCents: 4_500_000,
+      avgUsdCents: 4_800_000,
+      maxUsdCents: 15_000_000,
+    },
+  ],
 };
 
 const getDashboard = mock<(params: URLSearchParams) => Promise<Dashboard>>(() => Promise.resolve(dashboard));
@@ -63,5 +74,14 @@ describe("DashboardPage", () => {
 
     await screen.findByText("Headcount", { selector: "dt" });
     expect(getDashboard).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows pay per country as a chart and a table, countries by name", async () => {
+    render(<DashboardPage />);
+
+    expect((await screen.findByRole("figure", { name: "Median pay by country" })).textContent).toContain(
+      "India: $45,000",
+    );
+    expect(screen.getByRole("table", { name: "Pay per country" }).textContent).toContain("India");
   });
 });

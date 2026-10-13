@@ -3,10 +3,12 @@ import type { Dashboard } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
-import { formatUsd } from "@/lib/format";
+import { formatCountry, formatUsd } from "@/lib/format";
 import { useQueryParams } from "@/lib/router";
 import { getDashboard } from "./dashboard.api";
-import { DASHBOARD_COPY } from "./dashboard.constants";
+import { CHART_COPY, DASHBOARD_COPY } from "./dashboard.constants";
+import { MedianPayChart } from "./MedianPayChart";
+import { PayTable } from "./PayTable";
 import { StatTile } from "./StatTile";
 
 const count = new Intl.NumberFormat("en-US");
@@ -85,6 +87,23 @@ export function DashboardPage() {
           <StatTile label={DASHBOARD_COPY.hires} value={count.format(state.data.summary.hiresLast12Months)} />
           <StatTile label={DASHBOARD_COPY.tenure} value={DASHBOARD_COPY.years(state.data.summary.avgTenureYears)} />
         </dl>
+      )}
+      {state.status === "ready" && (
+        <section className="flex flex-col gap-4">
+          {/* Bars read best sorted by their own value; the table keeps the API's largest-headcount order. */}
+          <MedianPayChart
+            rows={state.data.byCountry
+              .map((c) => ({ label: formatCountry(c.country), medianUsdCents: c.medianUsdCents }))
+              .sort((a, b) => b.medianUsdCents - a.medianUsdCents)}
+          />
+          <PayTable
+            caption={CHART_COPY.payByCountry}
+            groupLabel={CHART_COPY.country}
+            rows={state.data.byCountry}
+            groupOf={(c) => c.country}
+            format={formatCountry}
+          />
+        </section>
       )}
     </div>
   );

@@ -13,3 +13,19 @@ export const DASHBOARD_COPY = {
   tenure: "Average tenure",
   years: (n: number) => `${n.toFixed(1)} years`,
 } as const;
+
+export const PAY_COLUMNS = {
+  headcount: "Headcount",
+  payroll: "Payroll",
+  min: "Lowest",
+  median: "Median",
+  avg: "Average",
+  max: "Highest",
+} as const;
+
+export const CHART_COPY = {
+  median: "Median salary",
+  medianByCountry: "Median pay by country",
+  payByCountry: "Pay per country",
+  country: "Country",
+} as const;

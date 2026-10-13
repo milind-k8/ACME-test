@@ -94,6 +94,7 @@ export interface Dashboard {
   /** YYYY-MM-DD date of the FX snapshot */
   fxAsOf: string;
   summary: DashboardSummary;
+  byCountry: (PayStats & { country: string })[];
 }
 
 /** The list and the dashboard filter on the same three fields. */

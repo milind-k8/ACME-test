@@ -19,9 +19,9 @@ The first page HR sees: the numbers they're asked for most, in USD from the date
 - [x] The page shows skeletons while loading and an alert with Retry on failure
 
 ## Slice 2: Pay per country
-- [ ] The response has one row per country: headcount, total payroll, lowest, median, average, and highest salary, largest headcount first
-- [ ] The page shows them as a table, money right-aligned in tabular figures, countries by name
-- [ ] A bar chart shows the median salary per country in USD
+- [x] The response has one row per country: headcount, total payroll, lowest, median, average, and highest salary, largest headcount first
+- [x] The page shows them as a table, money right-aligned in tabular figures, countries by name
+- [x] A bar chart shows the median salary per country in USD
 
 ## Slice 3: Pay per department
 - [ ] The response has one row per department with the same figures, largest headcount first

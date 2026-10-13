@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { median, payStats, summarize, type PayRow } from "./summarize";
+import { groupBy, median, payStats, summarize, type PayRow } from "./summarize";
 
 describe("median", () => {
   it.each([
@@ -70,5 +70,23 @@ describe("summarize", () => {
 
   it("is zeros for no rows", () => {
     expect(summarize([], today)).toEqual({ ...payStats([]), hiresLast12Months: 0, avgTenureYears: 0 });
+  });
+});
+
+describe("groupBy", () => {
+  const at = (country: string, usdCents: number): PayRow => ({ ...row(usdCents, "2020-01-01"), country });
+
+  it("gives each country its own stats, largest headcount first", () => {
+    const rows = [at("IN", 100), at("US", 150), at("IN", 200), at("DE", 250), at("IN", 300), at("US", 400)];
+
+    expect(groupBy(rows, "country")).toEqual([
+      { country: "IN", ...payStats([100, 200, 300]) },
+      { country: "US", ...payStats([150, 400]) },
+      { country: "DE", ...payStats([250]) },
+    ]);
+  });
+
+  it("breaks headcount ties alphabetically", () => {
+    expect(groupBy([at("US", 1), at("DE", 2)], "country").map((g) => g.country)).toEqual(["DE", "US"]);
   });
 });

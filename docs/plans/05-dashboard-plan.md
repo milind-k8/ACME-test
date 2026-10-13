@@ -57,9 +57,9 @@ Query design: [ADR-007](../adrs/007-dashboard-aggregation.md); caching: [ADR-008
   - First chart: `bunx shadcn add chart` → `components/ui/chart.tsx` + `recharts` 3.10.1 and `react-is` (pinned exact; strip `cn`/`radix-ui`/`lucide-react` as before). `features/dashboard/MedianPayChart.tsx`: horizontal bars of median USD per country, tooltip in whole dollars.
 - **Libraries added:** `recharts` 3.10.1, `react-is` (Recharts' peer), per ADR-006.
 - **Test list:**
-  - [ ] unit `summarize`: groups by country, each group's stats match `payStats` of its rows, ordered by headcount
-  - [ ] component `PayTable`: a row's figures in whole dollars, right-aligned
-  - [ ] component `MedianPayChart`: renders a figure titled "Median pay by country" with an `sr-only` summary of each country's median
+  - [x] unit `summarize`: groups by country, each group's stats match `payStats` of its rows, ordered by headcount
+  - [x] component `PayTable`: a row's figures in whole dollars, right-aligned
+  - [x] component `MedianPayChart`: renders a figure titled "Median pay by country" with an `sr-only` summary of each country's median
 
 ## Slice 3: Pay per department
 

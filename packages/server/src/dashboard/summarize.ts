@@ -57,3 +57,22 @@ export function summarize(rows: readonly PayRow[], today: string): DashboardSumm
   const avgTenureYears = rows.length === 0 ? 0 : Math.round((tenureDays / rows.length / DAYS_PER_YEAR) * 10) / 10;
   return { ...payStats(rows.map((r) => r.usdCents)), hiresLast12Months: hires, avgTenureYears };
 }
+
+type GroupField = "country" | "department" | "jobTitle";
+
+/**
+ * Stats per value of `field`, largest headcount first (ties alphabetical). One pass: the rows arrive sorted by
+ * salary, so appending keeps every group's list sorted and its median is the middle element (ADR-007).
+ */
+export function groupBy<F extends GroupField>(rows: readonly PayRow[], field: F): (PayStats & Record<F, string>)[] {
+  const groups = new Map<string, number[]>();
+  for (const r of rows) {
+    const key = r[field];
+    const list = groups.get(key);
+    if (list) list.push(r.usdCents);
+    else groups.set(key, [r.usdCents]);
+  }
+  return [...groups]
+    .map(([key, sorted]) => ({ [field]: key, ...payStats(sorted) }) as PayStats & Record<F, string>)
+    .sort((a, b) => b.headcount - a.headcount || (a[field] < b[field] ? -1 : 1));
+}
