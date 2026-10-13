@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { startTestServer, TEST_ADMIN } from "../test-support/test-server";
 
-let server: ReturnType<typeof startTestServer>;
+const loginTime = new Date("2026-10-13T09:00:00Z");
+let clock: Date;
+let server: Awaited<ReturnType<typeof startTestServer>>;
 
-beforeEach(() => {
-  server = startTestServer({ now: () => new Date("2026-10-13T09:00:00Z") });
+beforeEach(async () => {
+  clock = loginTime;
+  server = await startTestServer({ now: () => clock });
 });
 
 afterEach(async () => {
@@ -83,5 +86,39 @@ describe("POST /api/login", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ email: TEST_ADMIN.email });
+  });
+});
+
+describe("GET /api/me", () => {
+  it("returns 200 with the email for a valid session cookie", async () => {
+    const res = await fetch(`${server.url}/api/me`, { headers: { Cookie: server.loginCookie } });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ email: TEST_ADMIN.email });
+  });
+
+  const unauthenticated = { error: { code: "unauthenticated", message: "Please log in" } };
+
+  it("returns 401 without a session cookie", async () => {
+    const res = await fetch(`${server.url}/api/me`);
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual(unauthenticated);
+  });
+
+  it("returns 401 for a tampered session cookie", async () => {
+    const res = await fetch(`${server.url}/api/me`, { headers: { Cookie: `${server.loginCookie}x` } });
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual(unauthenticated);
+  });
+
+  it("returns 401 once the session is more than 8 hours old", async () => {
+    clock = new Date(loginTime.getTime() + (8 * 60 * 60 + 1) * 1000);
+
+    const res = await fetch(`${server.url}/api/me`, { headers: { Cookie: server.loginCookie } });
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual(unauthenticated);
   });
 });

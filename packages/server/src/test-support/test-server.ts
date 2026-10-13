@@ -1,5 +1,6 @@
 import type { Config } from "../config";
 import { openDatabase } from "../db/connection";
+import { signToken } from "../auth/token";
 import { upsertUser } from "../auth/users.repository";
 import { notFound, unexpected } from "../http/responses";
 import { createRoutes } from "../routes";
@@ -17,18 +18,20 @@ export const TEST_CONFIG: Config = {
 // argon2id is slow on purpose (~100 ms), so hash once per test process instead of once per server.
 const adminHash = await Bun.password.hash(TEST_ADMIN.password, { algorithm: "argon2id" });
 
-export function startTestServer(options: { now?: () => Date } = {}) {
+export async function startTestServer(options: { now?: () => Date } = {}) {
+  const now = options.now ?? (() => new Date());
   const db = openDatabase(":memory:");
   upsertUser(db, TEST_ADMIN.email, adminHash);
   const server = Bun.serve({
     port: 0,
-    routes: createRoutes(db, TEST_CONFIG, options.now),
+    routes: createRoutes(db, TEST_CONFIG, now),
     fetch: notFound,
     error: unexpected,
   });
   return {
     url: server.url.href.replace(/\/$/, ""),
     db,
+    loginCookie: `session=${await signToken({ email: TEST_ADMIN.email }, TEST_CONFIG.jwtSecret, now())}`,
     stop: () => server.stop(true),
   };
 }
