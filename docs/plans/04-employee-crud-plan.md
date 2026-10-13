@@ -82,23 +82,47 @@ Spec: [04-employee-crud-spec.md](../specs/04-employee-crud-spec.md) · Decisions
 - **Frontend:** `bunx shadcn add alert-dialog` → `@radix-ui/react-alert-dialog`. `DeleteEmployeeDialog({ employee, onConfirm, onOpenChange })` with "Delete Priya Sharma (E00042)?". After delete: toast, reload; if the page is now past the end, go back one page.
 - **Libraries added:** `@radix-ui/react-alert-dialog` (pinned exact; on the allowed list).
 - **Test list:**
-  - [ ] integration routes: DELETE → 204, then GET list and search no longer include them · unknown id → 404
-  - [ ] component: Delete names the employee · Cancel calls nothing · Confirm calls delete, shows "Employee deleted" · deleting the only row on page 3 moves to page 2
+  - [x] integration routes: DELETE → 204, then GET list and search no longer include them · unknown id → 404
+  - [x] component: Delete names the employee · Cancel calls nothing · Confirm calls delete, shows "Employee deleted" · deleting the only row on page 3 moves to page 2
 
 ## Slice 4: Choices stay in step with the data
 
 - **Backend:** `GET /api/employees/form-options` → `getReferenceData(db)`. Registered as a static route, so it wins over `/api/employees/:id`.
 - **Frontend:** the form's selects come from it; after any save the page refetches filter options too.
 - **Test list:**
-  - [ ] integration routes: form-options returns sorted departments, countries with currency, currencies · no cookie → 401
-  - [ ] integration repository: a direct `UPDATE` to an unknown department is rejected by the trigger
-  - [ ] component: a new job title saved through the form appears in the job-title filter after save
+  - [x] integration routes: form-options returns sorted departments, countries with currency, currencies · no cookie → 401
+  - [x] integration repository: a direct `UPDATE` to an unknown department is rejected by the trigger
+  - [x] component: a new job title saved through the form appears in the job-title filter after save
 
 ## Decision
 - **Countries are a fixed list too** (the eight in the seed, each with its usual currency). The form needs a country → currency map to pre-fill, and the spec now says "supported countries". Adding a country is a migration, like departments. Alternative: free ISO codes with no pre-fill.
 
 ## As built
-_Filled in after the build._
+
+Built on branch `feat/employee-crud` across all four slices. `bun run check` passes with 222 server and 62 web tests. The add and delete dialogs were checked in headless Chrome against the dev server.
+
+**Files**
+- shared: `EmployeeInput`, `EmployeeFormOptions`; routes `employee` (`/api/employees/:id`), `employeeFormOptions`, and `employeePath(id)`
+- server:
+  - `db/migrations/005_reference_data.sql` (`departments`, `countries`, two triggers)
+  - `employees/validate-employee.ts` (`validateEmployee`, `parseSalary`, `parseId`), messages in `employees.constants.ts`
+  - `employees.repository.ts`: `createEmployee`, `getEmployee`, `updateEmployee`, `deleteEmployee`, `getReferenceData`
+  - `employees.routes.ts`: `POST /api/employees`, `PUT` and `DELETE /api/employees/:id`, `GET /api/employees/form-options`
+- web:
+  - `components/ui/{dialog,alert-dialog}.tsx`, `components/Toast.tsx`, `components/icons/XIcon.tsx`
+  - `lib/format.ts`: `formatMajor`
+  - `features/employees/{EmployeeFormDialog,DeleteEmployeeDialog}.tsx`; Edit/Delete actions in `EmployeeTable`; add/edit/delete flows in `EmployeesPage`
+
+**Libraries:** web `@radix-ui/react-dialog` 1.3.1 and `@radix-ui/react-alert-dialog` 1.2.1, pinned exact.
+
+**Differences from the plan, and why**
+- **`GET /api/employees/form-options` was built in Slice 1**, not Slice 4: the add form needs its selects from the start.
+- **The form dialog takes `onSubmit` and shows the errors it rejects with**, rather than calling the API itself, so it stays presentational (frontend.md: components never fetch). The page owns create, update, and delete.
+- **Delete confirms with a plain destructive `Button`, not `AlertDialogAction`**, which would close the dialog before the request finished.
+- **`alert-dialog.tsx` was written by hand** from shadcn's new-york source: the CLI stopped at a prompt to overwrite `button.tsx`. It installed `cn` and `radix-ui` anyway; both were removed.
+- **"Today" for hire dates is the UTC date** on the server's injected clock. Late in the evening west of UTC, today's local date can still read as "tomorrow" for a few hours.
+- **Route tests use a fixed clock** (2026-10-13), so the future-date rule doesn't depend on when they run.
+- **An older schema test now accepts either error** for a lowercase country: the new reference trigger fires before the `CHECK`.
 
 ---
 - [x] Reviewed

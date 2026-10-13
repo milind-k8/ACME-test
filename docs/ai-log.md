@@ -65,3 +65,16 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
 - **I decided:** seeding is opt-in through `SEED_IF_EMPTY`, on only in Compose. The AI pointed out that "seed whenever empty" would bring back 10,000 fake people after HR deletes everyone, once CRUD exists.
 - **Built test-first:** config parsing (only `true`/`false`, anything else stops startup) and `seedIfEmpty` (identical rows to `bun run seed`, untouched when data exists).
 - **Checked in Docker** under a separate Compose project, so the fresh volume it needed didn't wipe my existing one.
+
+## Add, edit, and delete employees (2026-10-13)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** requirement #2. The AI drafted the spec with four open questions.
+- **I decided:** departments are a fixed list; delete removes the row; future hire dates are rejected. The AI took its recommendation for the salary format (a decimal string in major units) since I didn't pick, and proposed making countries a fixed list too so the form can pre-fill the currency; I approved it with the plan.
+- **Schema:** `departments` and `countries` tables, enforced by triggers because SQLite can't add a foreign key to an existing column without rebuilding the table.
+- **Built test-first** in four slices. Salary parsing uses string arithmetic only, so no float ever holds a salary; every invalid field is reported at once.
+- **AI corrections:**
+  - The shadcn CLI again added `cn` and `radix-ui` for Dialog, and for AlertDialog it stopped at a prompt to overwrite `button.tsx`. The AI removed the packages and wrote `alert-dialog.tsx` by hand.
+  - It pulled the form-options endpoint forward from Slice 4 when the add form needed it, and noted the change.
+  - It gave the route tests a fixed clock once "no future hire dates" made them depend on the real date.
