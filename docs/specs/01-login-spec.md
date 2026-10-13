@@ -6,30 +6,30 @@ Requirement: [requirements.md → Must have](../requirements.md#must-have-mvp) (
 The HR manager signs in with one email and password before seeing any salary data. The session is a signed token in an httpOnly cookie, so the server stores no session state.
 
 ## Slice 1: HR can log in (walking skeleton)
-- [ ] On startup, the server creates the single demo HR account from `ADMIN_EMAIL` / `ADMIN_PASSWORD`, or resets it to those values if it already exists, so the published demo credentials always work
-- [ ] The stored password is an argon2id hash, never the plain text
-- [ ] `POST /api/login` with the correct email and password returns `200` with `{ email }`
-- [ ] A successful login sets a `session` cookie that is `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`, with `Max-Age` of 8 hours
-- [ ] The email is stored in lowercase
-- [ ] Login matches the email regardless of letter case and surrounding spaces
-- [ ] A wrong password returns `401` `{ error: { code: "invalid_credentials", message: "Email or password is incorrect" } }` and sets no cookie
-- [ ] An unknown email returns exactly the same `401` response as a wrong password
-- [ ] A missing or non-string `email` or `password` returns `400` with a message for each bad field in `details`
-- [ ] The login form submits email and password and then shows the app shell with the user's email in the header
-- [ ] A rejected login shows "Email or password is incorrect" on the form and keeps the typed email
-- [ ] The submit button is disabled while the login request is in flight
+- [x] On startup, the server creates the single demo HR account from `ADMIN_EMAIL` / `ADMIN_PASSWORD`, or resets it to those values if it already exists, so the published demo credentials always work
+- [x] The stored password is an argon2id hash, never the plain text
+- [x] `POST /api/login` with the correct email and password returns `200` with `{ email }`
+- [x] A successful login sets a `session` cookie that is `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`, with `Max-Age` of 8 hours
+- [x] The email is stored in lowercase
+- [x] Login matches the email regardless of letter case and surrounding spaces
+- [x] A wrong password returns `401` `{ error: { code: "invalid_credentials", message: "Email or password is incorrect" } }` and sets no cookie
+- [x] An unknown email returns exactly the same `401` response as a wrong password
+- [x] A missing or non-string `email` or `password` returns `400` with a message for each bad field in `details`
+- [x] The login form submits email and password and then shows the app shell with the user's email in the header
+- [x] A rejected login shows "Email or password is incorrect" on the form and keeps the typed email
+- [x] The submit button is disabled while the login request is in flight
 
 ## Slice 2: The session protects the API
-- [ ] `GET /api/me` with a valid session cookie returns `200` with `{ email }`
-- [ ] `GET /api/me` returns `401` `{ error: { code: "unauthenticated", ... } }` when the cookie is missing
-- [ ] It returns the same `401` when the token is malformed, its signature was tampered with, it was signed with a different secret, or its algorithm isn't HS256 (including `none`)
-- [ ] It returns the same `401` when the token is more than 8 hours old
-- [ ] Reloading the page while logged in shows the app, not the login form
+- [x] `GET /api/me` with a valid session cookie returns `200` with `{ email }`
+- [x] `GET /api/me` returns `401` `{ error: { code: "unauthenticated", ... } }` when the cookie is missing
+- [x] It returns the same `401` when the token is malformed, its signature was tampered with, it was signed with a different secret, or its algorithm isn't HS256 (including `none`)
+- [x] It returns the same `401` when the token is more than 8 hours old
+- [x] Reloading the page while logged in shows the app, not the login form
 
 ## Slice 3: HR can log out
-- [ ] `POST /api/logout` returns `204` and expires the `session` cookie
-- [ ] Clicking "Log out" in the header returns to the login form
-- [ ] Any API call answered with `401` returns the UI to the login form
+- [x] `POST /api/logout` returns `204` and expires the `session` cookie
+- [x] Clicking "Log out" in the header returns to the login form
+- [x] Any API call answered with `401` returns the UI to the login form
 
 ## API shape (indicative)
 ```
