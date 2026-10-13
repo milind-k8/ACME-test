@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import type { Employee, EmployeeFilterOptions, NewEmployee, Page } from "@smt/shared/api-types";
+import type {
+  Employee,
+  EmployeeFilterOptions,
+  EmployeeFormOptions,
+  EmployeeInput,
+  NewEmployee,
+  Page,
+} from "@smt/shared/api-types";
 import { generateEmployees } from "../seed/generate-employees";
 import { startTestServer } from "../test-support/test-server";
 import { replaceAllEmployees } from "./employees.repository";
@@ -10,8 +17,11 @@ const seeded = generateEmployees(200, 7);
 // SQLite assigns ids in insert order, so the seeded rows' ids are 1..200.
 const stored: Employee[] = seeded.map((e, i) => ({ id: i + 1, ...e }));
 
+// A fixed clock, so "hire dates can't be in the future" doesn't depend on when the tests run.
+const now = () => new Date("2026-10-13T12:00:00Z");
+
 beforeEach(async () => {
-  server = await startTestServer();
+  server = await startTestServer({ now });
   replaceAllEmployees(server.db, seeded);
 });
 
@@ -239,5 +249,88 @@ describe("GET /api/employees?sort=", () => {
     const res = await getEmployees("?sort=salary_minor;DROP TABLE employees");
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/employees", () => {
+  const input: EmployeeInput = {
+    firstName: " Aarav ",
+    lastName: "Mishra",
+    jobTitle: "Data Analyst",
+    department: "Data",
+    country: "IN",
+    currency: "INR",
+    salary: "1850000.50",
+    hiredAt: "2026-10-01",
+  };
+
+  const post = (body: unknown, cookie = server.loginCookie) =>
+    fetch(`${server.url}/api/employees`, {
+      method: "POST",
+      headers: { Cookie: cookie, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  it("stores a new hire with the next employee number and returns it", async () => {
+    const res = await post(input);
+
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({
+      id: 201,
+      employeeNumber: "E00201",
+      firstName: "Aarav",
+      lastName: "Mishra",
+      jobTitle: "Data Analyst",
+      department: "Data",
+      country: "IN",
+      currency: "INR",
+      salaryMinor: 185_000_050,
+      hiredAt: "2026-10-01",
+    });
+  });
+
+  it("returns 400 with every bad field", async () => {
+    const res = await post({ ...input, lastName: "", department: "Legal", salary: "0" });
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { code: string; details: Record<string, string> } };
+    expect(body.error.code).toBe("validation");
+    expect(Object.keys(body.error.details).sort()).toEqual(["department", "lastName", "salary"]);
+  });
+
+  it("returns 400 for a body that isn't JSON", async () => {
+    const res = await fetch(`${server.url}/api/employees`, {
+      method: "POST",
+      headers: { Cookie: server.loginCookie, "Content-Type": "application/json" },
+      body: "{not json",
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a hire date after today on the server's clock", async () => {
+    const res = await post({ ...input, hiredAt: "2099-01-01" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 401 without a session", async () => {
+    expect((await post(input, "")).status).toBe(401);
+  });
+});
+
+describe("GET /api/employees/form-options", () => {
+  it("returns the departments, countries with their usual currency, and currencies", async () => {
+    const res = await fetch(`${server.url}/api/employees/form-options`, { headers: { Cookie: server.loginCookie } });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as EmployeeFormOptions;
+    expect(body.departments).toContain("Engineering");
+    expect(body.countries).toContainEqual({ code: "IN", currency: "INR" });
+    expect(body.currencies).toEqual([...body.currencies].sort());
+  });
+
+  it("returns 401 without a session", async () => {
+    expect((await fetch(`${server.url}/api/employees/form-options`)).status).toBe(401);
   });
 });

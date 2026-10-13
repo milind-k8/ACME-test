@@ -5,4 +5,5 @@ export const API_ROUTES = {
   me: "/api/me",
   employees: "/api/employees",
   employeeFilters: "/api/employees/filters",
+  employeeFormOptions: "/api/employees/form-options",
 } as const;

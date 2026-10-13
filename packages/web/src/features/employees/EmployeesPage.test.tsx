@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import type { Employee, EmployeeFilterOptions, Page } from "@smt/shared/api-types";
+import type { Employee, EmployeeFilterOptions, EmployeeFormOptions, EmployeeInput, Page } from "@smt/shared/api-types";
 import { ApiError } from "@/lib/api";
 
 const priya: Employee = {
@@ -22,7 +22,11 @@ const listEmployees = mock<(params: URLSearchParams) => Promise<Page<Employee>>>
 const getFilterOptions = mock<() => Promise<EmployeeFilterOptions>>(() =>
   Promise.resolve({ countries: ["DE", "IN"], departments: ["Engineering"], jobTitles: ["Software Engineer"] }),
 );
-void mock.module("./employees.api", () => ({ listEmployees, getFilterOptions }));
+const getFormOptions = mock<() => Promise<EmployeeFormOptions>>(() =>
+  Promise.resolve({ departments: ["Data"], countries: [{ code: "IN", currency: "INR" }], currencies: ["INR"] }),
+);
+const createEmployee = mock<(input: EmployeeInput) => Promise<Employee>>(() => Promise.resolve(priya));
+void mock.module("./employees.api", () => ({ listEmployees, getFilterOptions, getFormOptions, createEmployee }));
 const { EmployeesPage } = await import("./EmployeesPage");
 
 const requestedPages = () => listEmployees.mock.calls.map(([params]) => params.get("page"));
@@ -203,5 +207,38 @@ describe("EmployeesPage", () => {
     await waitFor(() => {
       expect(window.location.search).toBe("?sort=name&order=desc");
     });
+  });
+
+  it("adds an employee from the dialog, confirms it, and reloads the list and filters", async () => {
+    render(<EmployeesPage />);
+    await screen.findByRole("row", { name: /E00001/ });
+    const listCalls = listEmployees.mock.calls.length;
+    const filterCalls = getFilterOptions.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Add employee" }));
+    const dialog = await screen.findByRole("dialog");
+    const type = (label: string, value: string) => {
+      fireEvent.change(within(dialog).getByLabelText(label), { target: { value } });
+    };
+    const choose = (label: string, option: string) => {
+      fireEvent.keyDown(within(dialog).getByRole("combobox", { name: label }), { key: "Enter" });
+      fireEvent.click(screen.getByRole("option", { name: option }));
+    };
+    type("First name", "Aarav");
+    type("Last name", "Mishra");
+    type("Job title", "Data Analyst");
+    choose("Department", "Data");
+    choose("Country", "India");
+    type("Annual salary", "1850000");
+    type("Hire date", "2026-10-01");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Employee added")).toBeTruthy();
+    expect(createEmployee).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(listEmployees.mock.calls.length).toBeGreaterThan(listCalls);
+    expect(getFilterOptions.mock.calls.length).toBeGreaterThan(filterCalls);
   });
 });

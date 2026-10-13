@@ -3,17 +3,21 @@ import {
   EMPLOYEE_SORTS,
   type Employee,
   type EmployeeFilterOptions,
+  type EmployeeFormOptions,
+  type EmployeeInput,
   type EmployeeSort,
   type Page,
 } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Toast } from "@/components/Toast";
 import { ApiError } from "@/lib/api";
 import { useQueryParams } from "@/lib/router";
 import { EmployeeFilters, type FilterName } from "./EmployeeFilters";
+import { EmployeeFormDialog } from "./EmployeeFormDialog";
 import { EmployeeTable } from "./EmployeeTable";
-import { getFilterOptions, listEmployees } from "./employees.api";
-import { EMPLOYEE_COPY } from "./employees.constants";
+import { createEmployee, getFilterOptions, getFormOptions, listEmployees } from "./employees.api";
+import { EMPLOYEE_COPY, FORM_COPY } from "./employees.constants";
 import { Pagination } from "./Pagination";
 
 const SKELETON_ROWS = 8;
@@ -27,6 +31,12 @@ export function EmployeesPage() {
   const [state, setState] = useState<State>({ status: "loading" });
   const [options, setOptions] = useState<EmployeeFilterOptions | null>(null);
   const [reloads, setReloads] = useState(0);
+  const [formOptions, setFormOptions] = useState<EmployeeFormOptions | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const hideToast = useCallback(() => {
+    setToast(null);
+  }, []);
   // A string, so the effect re-runs when the URL changes, not on every render.
   const query = params.toString();
   const urlSearch = params.get("q") ?? "";
@@ -60,9 +70,22 @@ export function EmployeesPage() {
     };
   }, [query, reloads, fail]);
 
+  // Reloaded after every save, so a new job title shows up in the filter.
   useEffect(() => {
     getFilterOptions().then(setOptions, fail);
+  }, [fail, reloads]);
+
+  useEffect(() => {
+    getFormOptions().then(setFormOptions, fail);
   }, [fail]);
+
+  // Errors propagate to the dialog, which shows them per field.
+  const addEmployee = async (input: EmployeeInput) => {
+    await createEmployee(input);
+    setAdding(false);
+    setToast(EMPLOYEE_COPY.added);
+    setReloads((n) => n + 1);
+  };
 
   // Keep the box in step when the URL changes from elsewhere (Back, Clear filters).
   useEffect(() => {
@@ -101,10 +124,31 @@ export function EmployeesPage() {
   return (
     // Filters and pagination stay put; only the table area scrolls.
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">{EMPLOYEE_COPY.title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{EMPLOYEE_COPY.subtitle}</p>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">{EMPLOYEE_COPY.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{EMPLOYEE_COPY.subtitle}</p>
+        </div>
+        <Button
+          disabled={!formOptions}
+          onClick={() => {
+            setAdding(true);
+          }}
+        >
+          {FORM_COPY.addTitle}
+        </Button>
       </div>
+      {formOptions && (
+        // Keyed by open state, so each new form starts empty.
+        <EmployeeFormDialog
+          key={String(adding)}
+          open={adding}
+          options={formOptions}
+          onOpenChange={setAdding}
+          onSubmit={addEmployee}
+        />
+      )}
+      {toast && <Toast message={toast} onDone={hideToast} />}
       {options && (
         <EmployeeFilters
           options={options}

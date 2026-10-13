@@ -16,6 +16,7 @@ export const EMPLOYEE_COPY = {
   retry: "Retry",
   noMatches: "No employees match these filters.",
   clearFilters: "Clear filters",
+  added: "Employee added",
 } as const;
 
 export const PAGINATION_COPY = {
@@ -29,4 +30,20 @@ export const FILTER_COPY = {
   country: { label: "Country", all: "All countries" },
   department: { label: "Department", all: "All departments" },
   jobTitle: { label: "Job title", all: "All job titles" },
+} as const;
+
+export const FORM_COPY = {
+  addTitle: "Add employee",
+  description: "Salary is the annual gross, in the currency the employee is paid in.",
+  firstName: "First name",
+  lastName: "Last name",
+  jobTitle: "Job title",
+  department: "Department",
+  country: "Country",
+  currency: "Currency",
+  salary: "Annual salary",
+  hiredAt: "Hire date",
+  choose: "Choose…",
+  cancel: "Cancel",
+  save: "Save",
 } as const;

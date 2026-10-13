@@ -3,7 +3,8 @@ import type { NewEmployee } from "@smt/shared/api-types";
 import type { Database } from "bun:sqlite";
 import { openDatabase } from "../db/connection";
 import { generateEmployees } from "../seed/generate-employees";
-import { listEmployees, replaceAllEmployees } from "./employees.repository";
+import { createEmployee, getReferenceData, listEmployees, replaceAllEmployees } from "./employees.repository";
+import { SEED_COUNTRIES, SEED_JOBS } from "../seed/data";
 import type { EmployeeListQuery } from "./validate-list-query";
 
 let db: Database;
@@ -65,7 +66,8 @@ describe("employees table", () => {
   it("rejects a country that is not an upper-case two-letter code", () => {
     expect(() => {
       replaceAllEmployees(db, [{ ...validEmployee, country: "in" }]);
-    }).toThrow("CHECK constraint failed");
+      // The reference trigger (005) fires before the CHECK; either one rejecting it is the point.
+    }).toThrow(/CHECK constraint failed|unknown department or country/);
   });
 });
 
@@ -128,5 +130,57 @@ describe("name search index", () => {
     replaceAllEmployees(db, [{ ...validEmployee, employeeNumber: "E00002", lastName: "Gupta" }]);
 
     expect(names("sharma")).toEqual([]);
+  });
+});
+
+describe("reference data", () => {
+  it("includes every department and country the seed uses", () => {
+    const ref = getReferenceData(db);
+
+    expect(ref.departments).toEqual([...new Set(SEED_JOBS.map((j) => j.department))].sort());
+    expect(ref.countries).toEqual(
+      SEED_COUNTRIES.map((c) => ({ code: c.code, currency: c.currency })).sort((a, b) => a.code.localeCompare(b.code)),
+    );
+    expect(ref.currencies).toEqual(["BRL", "CAD", "EUR", "GBP", "INR", "JPY", "USD"]);
+  });
+
+  it.each([
+    ["department", { department: "Legal" }],
+    ["country", { country: "FR" }],
+  ])("rejects an unknown %s even without validation", (_name, change) => {
+    expect(() => {
+      replaceAllEmployees(db, [{ ...validEmployee, ...change }]);
+    }).toThrow("unknown department or country");
+  });
+
+  it("rejects changing an employee to an unknown department", () => {
+    replaceAllEmployees(db, [validEmployee]);
+
+    expect(() => db.run("UPDATE employees SET department = 'Legal'")).toThrow("unknown department or country");
+  });
+});
+
+describe("createEmployee", () => {
+  const input = {
+    firstName: validEmployee.firstName,
+    lastName: validEmployee.lastName,
+    jobTitle: validEmployee.jobTitle,
+    department: validEmployee.department,
+    country: validEmployee.country,
+    salaryMinor: validEmployee.salaryMinor,
+    currency: validEmployee.currency,
+    hiredAt: validEmployee.hiredAt,
+  };
+
+  it("numbers the first employee E00001", () => {
+    expect(createEmployee(db, input).employeeNumber).toBe("E00001");
+  });
+
+  it("gives the next number after the highest one", () => {
+    replaceAllEmployees(db, [{ ...validEmployee, employeeNumber: "E10000" }]);
+
+    const created = createEmployee(db, input);
+
+    expect(created).toEqual({ ...input, id: 2, employeeNumber: "E10001" });
   });
 });
