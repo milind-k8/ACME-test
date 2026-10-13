@@ -2,6 +2,10 @@ import type { ApiErrorBody } from "@smt/shared/api-types";
 
 const GENERIC_MESSAGE = "Something went wrong. Please try again.";
 
+// A 401 anywhere except the login call itself means the session is gone (expired or logged out elsewhere).
+const LOGIN_PATH = "/api/login";
+const unauthorizedListeners = new Set<() => void>();
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -30,6 +34,11 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(0, "network", "Can't reach the server. Check your connection.");
   });
   if (!res.ok) {
+    if (res.status === 401 && path !== LOGIN_PATH) {
+      unauthorizedListeners.forEach((listener) => {
+        listener();
+      });
+    }
     // A proxy or crash page may not be JSON at all; that still has to surface as an ApiError.
     const body: unknown = await res.json().catch(() => null);
     if (isApiErrorBody(body)) {
@@ -38,5 +47,11 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
     throw new ApiError(res.status, "unknown", GENERIC_MESSAGE);
   }
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+export function onUnauthorized(listener: () => void): () => void {
+  unauthorizedListeners.add(listener);
+  return () => unauthorizedListeners.delete(listener);
 }
