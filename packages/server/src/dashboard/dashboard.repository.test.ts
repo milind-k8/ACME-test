@@ -1,11 +1,15 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { Database as SqliteDatabase } from "bun:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { Database } from "bun:sqlite";
 import type { NewEmployee } from "@smt/shared/api-types";
 import { openDatabase } from "../db/connection";
 import { replaceAllEmployees } from "../employees/employees.repository";
 import { generateEmployees } from "../seed/generate-employees";
 import { fullScans, queryPlans } from "../test-support/query-plans";
-import { fxAsOf, listPay } from "./dashboard.repository";
+import { dataVersion, fxAsOf, listPay } from "./dashboard.repository";
 
 let db: Database;
 
@@ -69,4 +73,46 @@ describe("listPay query plan", () => {
       expect(fullScans(plans)).toEqual([]);
     },
   );
+});
+
+describe("dataVersion", () => {
+  // A real file, so a second connection (like `bun run seed` in another process) can write to it.
+  let dir: string;
+  let fileDb: Database;
+  let path: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "smt-version-"));
+    path = join(dir, "test.db");
+    fileDb = openDatabase(path);
+    replaceAllEmployees(fileDb, [person(1, 15_000_000, "USD", "US")]);
+  });
+
+  afterEach(() => {
+    fileDb.close();
+    rmSync(dir, { recursive: true });
+  });
+
+  it("stays the same across reads", () => {
+    const before = dataVersion(fileDb);
+    listPay(fileDb, {});
+
+    expect(dataVersion(fileDb)).toBe(before);
+  });
+
+  it("changes after a write on the same connection", () => {
+    const before = dataVersion(fileDb);
+    fileDb.run("UPDATE employees SET salary_minor = salary_minor + 1");
+
+    expect(dataVersion(fileDb)).not.toBe(before);
+  });
+
+  it("changes after another connection writes", () => {
+    const before = dataVersion(fileDb);
+    const other = new SqliteDatabase(path);
+    other.run("DELETE FROM employees");
+    other.close();
+
+    expect(dataVersion(fileDb)).not.toBe(before);
+  });
 });

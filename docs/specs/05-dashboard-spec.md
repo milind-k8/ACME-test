@@ -46,14 +46,14 @@ The first page HR sees: the numbers they're asked for most, in USD from the date
 - [x] With no matching employees, the page says "No employees match these filters." with a "Clear filters" action
 
 ## Slice 7: Cache without stale data
-- [ ] Asking for the same dashboard twice in a row doesn't run the dashboard query the second time
-- [ ] After adding, editing, or deleting an employee through the API, the next dashboard request shows the change
-- [ ] After another process changes the database (e.g. `bun run seed` while the API runs), the next dashboard request shows the change
-- [ ] When the date changes, "hires in the last 12 months" and "average tenure" are recomputed
-- [ ] Different filters are cached separately, and at most 100 responses are kept
+- [x] Asking for the same dashboard twice in a row doesn't run the dashboard query the second time
+- [x] After adding, editing, or deleting an employee through the API, the next dashboard request shows the change
+- [x] After another process changes the database (e.g. `bun run seed` while the API runs), the next dashboard request shows the change
+- [x] When the date changes, "hires in the last 12 months" and "average tenure" are recomputed
+- [x] Different filters are cached separately, and at most 100 responses are kept
 
 ## Performance
-- [ ] With the 10,000-employee seed, `GET /api/dashboard` answers in under 50 ms with no filters and with each filter
+- [x] With the 10,000-employee seed, `GET /api/dashboard` answers in under 50 ms with no filters and with each filter
 
 ## API shape (indicative)
 ```

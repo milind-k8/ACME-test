@@ -19,9 +19,10 @@ export const TEST_CONFIG: Config = {
 // argon2id is slow on purpose (~100 ms), so hash once per test process instead of once per server.
 const adminHash = await Bun.password.hash(TEST_ADMIN.password, { algorithm: "argon2id" });
 
-export async function startTestServer(options: { now?: () => Date } = {}) {
+// databasePath: a temp file when a test needs a second connection to the same database; ":memory:" otherwise.
+export async function startTestServer(options: { now?: () => Date; databasePath?: string } = {}) {
   const now = options.now ?? (() => new Date());
-  const db = openDatabase(":memory:");
+  const db = openDatabase(options.databasePath ?? ":memory:");
   upsertUser(db, TEST_ADMIN.email, adminHash);
   const server = Bun.serve({
     port: 0,

@@ -40,3 +40,13 @@ export function listPay(db: Database, filters: EmployeeFilters = {}): PayRow[] {
 export function fxAsOf(db: Database): string {
   return db.query<{ asOf: string }, []>("SELECT max(as_of) AS asOf FROM fx_rates").get()?.asOf ?? "";
 }
+
+/**
+ * Changes whenever the data might have (ADR-008): total_changes() counts every row this connection has written,
+ * and PRAGMA data_version moves when another connection commits (e.g. `bun run seed` while the API runs).
+ */
+export function dataVersion(db: Database): string {
+  const own = db.query<{ n: number }, []>("SELECT total_changes() AS n").get()?.n ?? 0;
+  const other = db.query<{ data_version: number }, []>("PRAGMA data_version").get()?.data_version ?? 0;
+  return `${String(own)}:${String(other)}`;
+}
