@@ -36,6 +36,7 @@ packages/server/
     ├── routes.ts               createRoutes(db, config): merges every feature's routes
     ├── config.ts               reads + validates env vars once (fails fast if JWT_SECRET is missing)
     ├── http/
+    │   ├── http.constants.ts   HTTP_MESSAGES (generic not-found / internal messages)
     │   ├── responses.ts        json(), error(), notFound(), unexpected(err): the single error shape
     │   └── with-auth.ts        withAuth(handler): verifies the JWT cookie, then calls the handler
     ├── db/
@@ -43,9 +44,12 @@ packages/server/
     │   ├── migrate.ts          applies migrations/*.sql in order, tracks them in schema_migrations
     │   └── migrations/         001_users.sql, 002_employees_fx.sql, …
     ├── auth/
+    │   ├── auth.constants.ts   session cookie name/options/length, dummy hash, AUTH_MESSAGES
     │   ├── auth.routes.ts      POST /login, POST /logout, GET /me
     │   ├── token.ts            signToken / verifyToken (jose)
-    │   └── users.repository.ts findByEmail, createUser
+    │   ├── admin.ts            ensureAdmin: creates or resets the demo account from env
+    │   ├── validate-login.ts   pure: body → { ok, value } | { ok: false, errors }
+    │   └── users.repository.ts findByEmail, upsertUser
     ├── employees/
     │   ├── employees.routes.ts
     │   ├── employees.repository.ts   list(filters), get, create, update, remove
