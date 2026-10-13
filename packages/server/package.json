@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@smt/shared": "workspace:*"
+    "@smt/shared": "workspace:*",
+    "jose": "6.2.12"
   }
 }
