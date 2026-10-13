@@ -1,16 +1,9 @@
 /**
- * Who a request comes from, for the login limiter. Behind our own proxy (Caddy) every connection comes from the
- * proxy, so the real client is the address the proxy appended to X-Forwarded-For: the last entry. Earlier entries
- * can be sent by the client itself, so they're never used. Without a trusted proxy the header is ignored entirely.
+ * Who a request comes from, for the login limiter. Our proxy (Caddy) works out the client address, trusting only
+ * proxies on private networks in front of it, and sends it as X-Real-IP, replacing any X-Real-IP the client sent.
+ * The API trusts that header only with TRUST_PROXY=true; otherwise it uses the connection address.
  */
-export function clientAddress(
-  forwardedFor: string | null,
-  connectionAddress: string | null,
-  trustProxy: boolean,
-): string {
-  if (trustProxy && forwardedFor) {
-    const last = forwardedFor.split(",").at(-1)?.trim();
-    if (last) return last;
-  }
-  return connectionAddress ?? "unknown";
+export function clientAddress(realIp: string | null, connectionAddress: string | null, trustProxy: boolean): string {
+  const fromProxy = trustProxy ? realIp?.trim() : undefined;
+  return fromProxy || connectionAddress || "unknown";
 }

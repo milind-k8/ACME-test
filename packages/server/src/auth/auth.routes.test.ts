@@ -183,3 +183,30 @@ describe("POST /api/login rate limit", () => {
     expect((await postLogin(wrong)).status).toBe(401);
   });
 });
+
+describe("POST /api/login rate limit behind the proxy", () => {
+  // Our proxy (Caddy) sets X-Real-IP to the client address it worked out; the API trusts it with TRUST_PROXY.
+  let proxied: Awaited<ReturnType<typeof startTestServer>>;
+
+  beforeEach(async () => {
+    proxied = await startTestServer({ now: () => clock, config: { trustProxy: true } });
+  });
+
+  afterEach(async () => {
+    await proxied.stop();
+  });
+
+  const loginFrom = (realIp: string) =>
+    fetch(`${proxied.url}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Real-IP": realIp },
+      body: JSON.stringify({ email: TEST_ADMIN.email, password: "wrong-password" }),
+    });
+
+  it("limits each client address separately", async () => {
+    for (let i = 0; i < 5; i++) await loginFrom("198.51.100.1");
+
+    expect((await loginFrom("198.51.100.1")).status).toBe(429);
+    expect((await loginFrom("198.51.100.2")).status).toBe(401);
+  });
+});
