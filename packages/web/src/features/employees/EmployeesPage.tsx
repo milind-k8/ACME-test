@@ -1,24 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Employee } from "@smt/shared/api-types";
+import type { Employee, Page } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
+import { useQueryParams } from "@/lib/router";
 import { EmployeeTable } from "./EmployeeTable";
 import { listEmployees } from "./employees.api";
 import { EMPLOYEE_COPY } from "./employees.constants";
+import { Pagination } from "./Pagination";
 
 const SKELETON_ROWS = 8;
 
-type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; employees: Employee[] };
+type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; page: Page<Employee> };
 
 export function EmployeesPage() {
+  const [params, setParams] = useQueryParams();
   const [state, setState] = useState<State>({ status: "loading" });
+  // A string, so the effect re-runs when the URL changes, not on every render.
+  const query = params.toString();
 
   const load = useCallback(() => {
     setState({ status: "loading" });
-    listEmployees().then(
+    listEmployees(new URLSearchParams(query)).then(
       (page) => {
-        setState({ status: "ready", employees: page.items });
+        setState({ status: "ready", page });
       },
       (err: unknown) => {
         // Anything that isn't an ApiError is a bug: rethrow inside React so the error boundary reports it.
@@ -31,7 +36,7 @@ export function EmployeesPage() {
         setState({ status: "error", message: err.message });
       },
     );
-  }, []);
+  }, [query]);
 
   useEffect(load, [load]);
 
@@ -57,5 +62,18 @@ export function EmployeesPage() {
       </div>
     );
   }
-  return <EmployeeTable employees={state.employees} />;
+  const { items, page, pageSize, total } = state.page;
+  return (
+    <>
+      <EmployeeTable employees={items} />
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={(next) => {
+          setParams({ page: next > 1 ? String(next) : undefined });
+        }}
+      />
+    </>
+  );
 }

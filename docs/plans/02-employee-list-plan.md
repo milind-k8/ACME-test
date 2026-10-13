@@ -89,10 +89,10 @@ The seed is part of Slice 1: it's the only way rows get into the database until 
   - `EmployeesPage` reads `page` from the URL and refetches when it changes.
 - **Libraries added:** none.
 - **Test list:**
-  - [ ] unit `validate-list-query`: defaults · `pageSize` `0`, `101`, `abc` → error · `page` `0`, `1.5` → error
-  - [ ] integration `employees.routes`: page 2 = items 51–100 of the same order · past last page → `[]` with real `total` · bad `pageSize` → 400 with `details.pageSize`
-  - [ ] component `Pagination`: range text · Previous disabled on page 1 · Next disabled on last page
-  - [ ] component `EmployeesPage`: clicking Next writes `page=2` to the URL · loading with `?page=3` requests page 3
+  - [x] unit `validate-list-query`: defaults · `pageSize` `0`, `101`, `abc` → error · `page` `0`, `1.5` → error
+  - [x] integration `employees.routes`: page 2 = items 51–100 of the same order · past last page → `[]` with real `total` · bad `pageSize` → 400 with `details.pageSize`
+  - [x] component `Pagination`: range text · Previous disabled on page 1 · Next disabled on last page
+  - [x] component `EmployeesPage`: clicking Next writes `page=2` to the URL · loading with `?page=3` requests page 3
 - **Quality checks:** no unvalidated query param reaches the repository
 
 ## Slice 3: Filters

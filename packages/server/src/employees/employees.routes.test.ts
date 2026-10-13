@@ -40,6 +40,32 @@ describe("GET /api/employees", () => {
     expect(body.items).toEqual([...stored].sort(byName).slice(0, 50));
   });
 
+  it("returns the next 50 of the same ordering for page 2", async () => {
+    const body = (await (await getEmployees("?page=2")).json()) as Page<Employee>;
+
+    expect(body.page).toBe(2);
+    expect(body.items).toEqual([...stored].sort(byName).slice(50, 100));
+  });
+
+  it("returns an empty list with the real total for a page past the end", async () => {
+    const body = (await (await getEmployees("?page=99&pageSize=10")).json()) as Page<Employee>;
+
+    expect(body).toEqual({ items: [], total: 200, page: 99, pageSize: 10 });
+  });
+
+  it("returns 400 with the bad field for an invalid pageSize", async () => {
+    const res = await getEmployees("?pageSize=500");
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: {
+        code: "validation",
+        message: "Invalid employee list query",
+        details: { pageSize: "must be a whole number from 1 to 100" },
+      },
+    });
+  });
+
   it("returns 401 without a session", async () => {
     const res = await getEmployees("", "");
 

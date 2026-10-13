@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { Employee, NewEmployee, Page } from "@smt/shared/api-types";
+import type { EmployeeListQuery } from "./validate-list-query";
 
 export function replaceAllEmployees(db: Database, rows: NewEmployee[]): void {
   const insert = db.query(
@@ -25,7 +26,7 @@ export function replaceAllEmployees(db: Database, rows: NewEmployee[]): void {
   })();
 }
 
-export function listEmployees(db: Database, query: { page: number; pageSize: number }): Page<Employee> {
+export function listEmployees(db: Database, query: EmployeeListQuery): Page<Employee> {
   const items = db
     .query<Employee, [number, number]>(
       `SELECT id, employee_number AS employeeNumber, first_name AS firstName, last_name AS lastName,

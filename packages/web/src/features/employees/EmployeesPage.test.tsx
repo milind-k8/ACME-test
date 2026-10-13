@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Employee, Page } from "@smt/shared/api-types";
 import { ApiError } from "@/lib/api";
 
@@ -18,12 +18,16 @@ const priya: Employee = {
 
 const page = (items: Employee[]): Page<Employee> => ({ items, total: items.length, page: 1, pageSize: 50 });
 
-const listEmployees = mock<() => Promise<Page<Employee>>>(() => Promise.resolve(page([priya])));
+const listEmployees = mock<(params: URLSearchParams) => Promise<Page<Employee>>>(() => Promise.resolve(page([priya])));
 void mock.module("./employees.api", () => ({ listEmployees }));
 const { EmployeesPage } = await import("./EmployeesPage");
 
+const requestedPages = () => listEmployees.mock.calls.map(([params]) => params.get("page"));
+
 beforeEach(() => {
   listEmployees.mockClear();
+  listEmployees.mockImplementation(() => Promise.resolve(page([priya])));
+  window.history.replaceState(null, "", "/");
 });
 
 describe("EmployeesPage", () => {
@@ -67,5 +71,26 @@ describe("EmployeesPage", () => {
     await screen.findByRole("row", { name: /E00001/ });
     expect(listEmployees).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("loads the next page and puts it in the URL when Next is clicked", async () => {
+    listEmployees.mockImplementation(() => Promise.resolve({ items: [priya], total: 120, page: 1, pageSize: 50 }));
+    render(<EmployeesPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Next" }));
+
+    await waitFor(() => {
+      expect(requestedPages()).toEqual([null, "2"]);
+    });
+    expect(window.location.search).toBe("?page=2");
+  });
+
+  it("loads the page named in the URL, so a reload keeps the page", async () => {
+    window.history.replaceState(null, "", "/?page=3");
+
+    render(<EmployeesPage />);
+
+    await screen.findByRole("row", { name: /E00001/ });
+    expect(requestedPages()).toEqual(["3"]);
   });
 });

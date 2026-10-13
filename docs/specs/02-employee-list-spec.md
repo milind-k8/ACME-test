@@ -22,13 +22,13 @@ The HR manager sees all employees in a paged table and finds people by name, cou
 - [x] Salary is shown in the employee's own currency with the right decimals (e.g. `¥6,500,000`, `$150,000.00`)
 
 ## Slice 2: Pagination
-- [ ] `?page=2` returns employees 51–100 of the same ordering
-- [ ] `?pageSize=` accepts 1–100; any other value returns `400` `validation`
-- [ ] A non-integer or zero `page` returns `400` `validation`
-- [ ] A page past the last one returns `200` with an empty list and the real `total`
-- [ ] The page shows "Showing 51–100 of 10,000" and Previous/Next buttons
-- [ ] Previous is disabled on the first page, and Next is disabled on the last page
-- [ ] The current page is kept in the URL, so reloading shows the same page
+- [x] `?page=2` returns employees 51–100 of the same ordering
+- [x] `?pageSize=` accepts 1–100; any other value returns `400` `validation`
+- [x] A non-integer or zero `page` returns `400` `validation`
+- [x] A page past the last one returns `200` with an empty list and the real `total`
+- [x] The page shows "Showing 51–100 of 10,000" and Previous/Next buttons
+- [x] Previous is disabled on the first page, and Next is disabled on the last page
+- [x] The current page is kept in the URL, so reloading shows the same page
 
 ## Slice 3: Filters
 - [ ] `?country=IN` returns only employees in India, with `total` counting only them
