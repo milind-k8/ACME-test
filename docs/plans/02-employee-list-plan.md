@@ -186,7 +186,7 @@ Built on branch `feat/employee-list` across all five slices. `bun run check` pas
 
 **Migrations:** `002_employees.sql` (with the FX snapshot), `003_employee_indexes.sql`, `004_employees_fts.sql`, as planned.
 
-**Libraries:** web `@radix-ui/react-select` 2.4.1, pinned exact.
+**Libraries:** web `@radix-ui/react-select` 2.4.1 and `@radix-ui/react-dropdown-menu` 2.2.1, pinned exact.
 
 **Differences from the plan, and why**
 - **Seed salaries use a per-country `payMultiplier`** (local currency per USD of base pay) instead of the FX snapshot. The generator is pure and the rates live in a migration, so it can't read them. "Every seeded currency is in `fx_rates`" is proven by the repository test instead: 10,000 generated rows insert under the foreign key.
@@ -199,6 +199,15 @@ Built on branch `feat/employee-list` across all five slices. `bun run check` pas
 - **Stale responses are dropped with a flag in the effect cleanup** rather than an `AbortController`. An aborted `fetch` surfaces from `lib/api.ts` as a network `ApiError`, which would flash the error alert; ignoring the late result is simpler and has a test.
 - **Icons:** shadcn's `Select` imports `lucide-react`, which isn't installed. It uses local `ChevronDownIcon`/`ChevronUpIcon`/`CheckIcon` from `components/icons/` instead; `CheckIcon` gained an optional `className`.
 - **The query-plan test matches the table alias** (`SCAN e`) as well as `SCAN employees`. Once the list query aliased the table, the original check silently passed with an index removed.
+
+**After review in the browser**
+
+Running the app turned up issues the tests couldn't see, since happy-dom applies no CSS:
+- **Dropdowns were transparent.** `index.css` had no `--popover` tokens, so shadcn's `bg-popover` resolved to nothing. Added them for light and dark.
+- **Names repeated about 12 times each** (10 × 10 names per country). The pools are now 40 × 40, and the generator redraws a taken full name, so all 10,000 names are unique. It throws instead of looping if asked for more people than there are names. Not in the spec; HR asked for it.
+- **The whole page scrolled.** The shell is now one screen tall and only the table scrolls, under a sticky header; filters and pagination stay in view. `Table` gained a `containerClassName` prop so its own wrapper is the scroll area. A percentage height (`h-full`) didn't resolve inside the flex item and hid the pagination; flex sizing (`flex-1 min-h-0`) fixed it.
+- **Visual refresh**, within frontend.md's rules: sidebar with logo, toolbar and table on white panels over `bg-muted/50`, a page title, a tinted uppercase table header, department chips, muted monospace employee numbers. Initials avatars in rows were tried and removed at HR's request.
+- **Account menu.** Email and Log out moved into a `DropdownMenu` behind the user's initial in the header. The component is trimmed to the parts in use, so it needs no icon library.
 
 ---
 - [x] Reviewed

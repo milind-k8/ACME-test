@@ -48,5 +48,11 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
   - The query-plan test went blind when the list query aliased `employees` as `e` (SQLite then reports `SCAN e`). The AI found it by dropping an index and seeing the test still pass, then fixed the check.
   - happy-dom started at `about:blank`, where `history.pushState` does nothing, so URL-state tests couldn't pass. It gave the test DOM a real URL.
   - It moved `NewEmployee` to `@smt/shared` after noticing the repository imported it from `seed/`, against the import rules.
+- **I reviewed it in the browser** and asked for: unique seeded names (they repeated ~12 times), only the table to scroll with filters always visible, a less bland look, no initials in table rows, and email and Log out in a menu behind my initial. I chose shadcn `DropdownMenu` over a hand-rolled menu.
+- **AI corrections after review:**
+  - The transparent dropdowns came from missing `--popover` theme tokens; component tests couldn't catch it because happy-dom applies no CSS.
+  - Its first scroll fix used a percentage height that didn't resolve in a flex layout and hid the pagination. It then drove headless Chrome against the dev server to measure the layout and screenshot it, instead of guessing.
+  - It checked contrast before picking colours: blue text on a blue tint fails AA, so tints carry dark text and the accent goes on icons.
+  - The shadcn CLI again added `cn`, `radix-ui` and `lucide-react` for Select and DropdownMenu; it removed them each time.
 - **Found along the way:** my local `.env` has the Docker `DATABASE_PATH`, so `bun run seed` and `bun dev` can't open the database on macOS. There's no Prettier config in the repo.
 - **Left for later:** seeding an empty database on first Docker boot (devops.md mentions it), and typo-tolerant search.
