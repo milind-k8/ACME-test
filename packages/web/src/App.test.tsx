@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { LoginRequest, SessionUser } from "@smt/shared/api-types";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import type { Employee, LoginRequest, Page, SessionUser } from "@smt/shared/api-types";
 import { api, ApiError } from "@/lib/api";
 
 const login = mock<(request: LoginRequest) => Promise<SessionUser>>(() => Promise.resolve({ email: "hr@acme.test" }));
 const getMe = mock<() => Promise<SessionUser>>();
 const logout = mock<() => Promise<void>>(() => Promise.resolve());
 void mock.module("./features/auth/auth.api", () => ({ login, getMe, logout }));
+const listEmployees = mock<() => Promise<Page<Employee>>>(() =>
+  Promise.resolve({ items: [], total: 0, page: 1, pageSize: 50 }),
+);
+void mock.module("./features/employees/employees.api", () => ({ listEmployees }));
 const { App } = await import("./App");
 
 const notLoggedIn = () => Promise.reject(new ApiError(401, "unauthenticated", "Please log in"));
@@ -43,6 +47,17 @@ describe("App", () => {
 
     expect((await screen.findByRole("banner")).textContent).toContain("hr@acme.test");
     expect(screen.queryByLabelText("Password")).toBeNull();
+  });
+
+  it("shows the employee list, with Employees in the navigation, once logged in", async () => {
+    getMe.mockImplementation(loggedIn);
+
+    render(<App />);
+
+    const nav = await screen.findByRole("navigation");
+    expect(within(nav).getByText("Employees")).toBeDefined();
+    expect(await screen.findByRole("table")).toBeDefined();
+    expect(listEmployees).toHaveBeenCalled();
   });
 
   it("shows a loading placeholder while the session is being checked", () => {
