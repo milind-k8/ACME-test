@@ -6,6 +6,7 @@ export type EmployeeFilter = (typeof EMPLOYEE_FILTERS)[number];
 export interface EmployeeListQuery extends Partial<Record<EmployeeFilter, string>> {
   page: number;
   pageSize: number;
+  q?: string;
 }
 
 export type ListQueryValidation =
@@ -34,5 +35,7 @@ export function validateListQuery(params: URLSearchParams): ListQueryValidation 
     const raw = params.get(filter)?.trim();
     if (raw) value[filter] = raw;
   }
+  const q = params.get("q")?.trim();
+  if (q) value.q = q;
   return { ok: true, value };
 }

@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { Employee, EmployeeFilterOptions, NewEmployee, Page } from "@smt/shared/api-types";
+import { toFtsQuery } from "./to-fts-query";
 import { EMPLOYEE_FILTERS, type EmployeeFilter, type EmployeeListQuery } from "./validate-list-query";
 
 export function replaceAllEmployees(db: Database, rows: NewEmployee[]): void {
@@ -36,29 +37,39 @@ const FILTER_COLUMNS: Record<EmployeeFilter, string> = {
 export function listEmployees(db: Database, query: EmployeeListQuery): Page<Employee> {
   const conditions: string[] = [];
   const values: string[] = [];
+  let join = "";
+  const match = query.q === undefined ? null : toFtsQuery(query.q);
+  if (match) {
+    join = "JOIN employees_fts ON employees_fts.rowid = e.id";
+    conditions.push("employees_fts MATCH ?");
+    values.push(match);
+  }
   for (const filter of EMPLOYEE_FILTERS) {
     const value = query[filter];
     if (value === undefined) continue;
-    conditions.push(`${FILTER_COLUMNS[filter]} = ?`);
+    conditions.push(`e.${FILTER_COLUMNS[filter]} = ?`);
     values.push(value);
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  // Search results come best match first; otherwise alphabetical.
+  const orderBy = match ? "bm25(employees_fts), e.id" : "e.last_name, e.first_name, e.id";
 
   const items = db
     .query<Employee, (string | number)[]>(
-      `SELECT id, employee_number AS employeeNumber, first_name AS firstName, last_name AS lastName,
-              job_title AS jobTitle, department, country, salary_minor AS salaryMinor, currency,
-              hired_at AS hiredAt
-       FROM employees
+      `SELECT e.id, e.employee_number AS employeeNumber, e.first_name AS firstName, e.last_name AS lastName,
+              e.job_title AS jobTitle, e.department, e.country, e.salary_minor AS salaryMinor, e.currency,
+              e.hired_at AS hiredAt
+       FROM employees e
+       ${join}
        ${where}
-       ORDER BY last_name, first_name, id
+       ORDER BY ${orderBy}
        LIMIT ? OFFSET ?`,
     )
     .all(...values, query.pageSize, (query.page - 1) * query.pageSize);
   // A separate count, so a page past the end still reports the real total.
   const total =
-    db.query<{ total: number }, string[]>(`SELECT count(*) AS total FROM employees ${where}`).get(...values)?.total ??
-    0;
+    db.query<{ total: number }, string[]>(`SELECT count(*) AS total FROM employees e ${join} ${where}`).get(...values)
+      ?.total ?? 0;
   return { items, total, page: query.page, pageSize: query.pageSize };
 }
 

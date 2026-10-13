@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import type { Employee, EmployeeFilterOptions, Page } from "@smt/shared/api-types";
+import type { Employee, EmployeeFilterOptions, NewEmployee, Page } from "@smt/shared/api-types";
 import { generateEmployees } from "../seed/generate-employees";
 import { startTestServer } from "../test-support/test-server";
 import { replaceAllEmployees } from "./employees.repository";
@@ -127,5 +127,62 @@ describe("GET /api/employees/filters", () => {
     const res = await fetch(`${server.url}/api/employees/filters`);
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("GET /api/employees?q=", () => {
+  const person = (n: number, firstName: string, lastName: string, country: string): NewEmployee => ({
+    employeeNumber: `T${String(n)}`,
+    firstName,
+    lastName,
+    jobTitle: "Software Engineer",
+    department: "Engineering",
+    country,
+    salaryMinor: 100_000,
+    currency: "USD",
+    hiredAt: "2020-01-01",
+  });
+  const people = [
+    person(1, "Krishna", "Sharma", "IN"),
+    person(2, "Krishnaveni", "Iyer", "IN"),
+    person(3, "Priya", "Sharma", "IN"),
+    person(4, "José", "García", "ES"),
+    person(5, "Anna", "Sharma", "DE"),
+  ];
+
+  beforeEach(() => {
+    replaceAllEmployees(server.db, people);
+  });
+
+  const search = async (query: string) => {
+    const res = await getEmployees(query);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Page<Employee>;
+    return body.items.map((e) => `${e.firstName} ${e.lastName}`).sort();
+  };
+
+  it("finds first or last names starting with the text", async () => {
+    expect(await search("?q=krishna")).toEqual(["Krishna Sharma", "Krishnaveni Iyer"]);
+  });
+
+  it("ignores letter case and accents", async () => {
+    expect(await search("?q=JOSE")).toEqual(["José García"]);
+    expect(await search("?q=garcia")).toEqual(["José García"]);
+  });
+
+  it("treats each word as a prefix that must all match", async () => {
+    expect(await search("?q=kri%20sha")).toEqual(["Krishna Sharma"]);
+  });
+
+  it("combines search with filters", async () => {
+    expect(await search("?q=sharma&country=IN")).toEqual(["Krishna Sharma", "Priya Sharma"]);
+  });
+
+  it.each(['"', "*", "(", ":", "-", "a OR b", "NEAR(", "^x"])("treats %p as plain text, never a 500", async (q) => {
+    await search(`?q=${encodeURIComponent(q)}`);
+  });
+
+  it("ignores a blank search", async () => {
+    expect(await search("?q=%20%20")).toHaveLength(people.length);
   });
 });

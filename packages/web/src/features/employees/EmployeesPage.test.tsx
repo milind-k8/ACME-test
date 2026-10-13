@@ -135,4 +135,43 @@ describe("EmployeesPage", () => {
     });
     await screen.findByRole("row", { name: /E00001/ });
   });
+
+  it("searches by name as you type, back on page 1, with the text in the URL", async () => {
+    window.history.replaceState(null, "", "/?page=2");
+    render(<EmployeesPage />);
+
+    fireEvent.change(await screen.findByRole("searchbox", { name: "Search by name" }), { target: { value: "kri" } });
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("?q=kri");
+    });
+    const last = listEmployees.mock.calls.at(-1)?.[0];
+    expect(last?.get("q")).toBe("kri");
+    expect(last?.get("page")).toBeNull();
+  });
+
+  it("fills the search box from the URL", async () => {
+    window.history.replaceState(null, "", "/?q=jose");
+
+    render(<EmployeesPage />);
+
+    expect((await screen.findByRole<HTMLInputElement>("searchbox", { name: "Search by name" })).value).toBe("jose");
+    expect(listEmployees.mock.calls[0]?.[0].get("q")).toBe("jose");
+  });
+
+  it("ignores a slow earlier response that arrives after a newer one", async () => {
+    let resolveFirst: (value: Page<Employee>) => void = () => undefined;
+    listEmployees.mockImplementationOnce(() => new Promise((r) => (resolveFirst = r)));
+    const jose = { ...priya, id: 2, employeeNumber: "E00002", firstName: "José", lastName: "García" };
+    listEmployees.mockImplementationOnce(() => Promise.resolve(page([jose])));
+    render(<EmployeesPage />);
+
+    fireEvent.change(await screen.findByRole("searchbox", { name: "Search by name" }), { target: { value: "jose" } });
+    await screen.findByRole("row", { name: /E00002/ });
+    resolveFirst(page([priya]));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(screen.queryByRole("row", { name: /E00001/ })).toBeNull();
+    expect(screen.getByRole("row", { name: /E00002/ })).toBeTruthy();
+  });
 });

@@ -104,7 +104,29 @@ describe("listEmployees query plans", () => {
       const plans = queryPlans({ page: 1, pageSize: 50, ...filter });
 
       expect(plans.length).toBeGreaterThan(0);
-      expect(plans.filter((detail) => detail.startsWith("SCAN employees"))).toEqual([]);
+      // The table may appear under its alias "e"; "SCAN employees_fts" is the search index, not the table.
+      expect(plans.filter((detail) => /^SCAN (employees|e)( |$)/.test(detail))).toEqual([]);
     },
   );
+});
+
+describe("name search index", () => {
+  const names = (q: string) => listEmployees(db, { page: 1, pageSize: 50, q }).items.map((e) => e.lastName);
+
+  it("follows a renamed employee", () => {
+    replaceAllEmployees(db, [validEmployee]);
+
+    db.run("UPDATE employees SET last_name = 'Verma' WHERE employee_number = 'E00001'");
+
+    expect(names("verma")).toEqual(["Verma"]);
+    expect(names("sharma")).toEqual([]);
+  });
+
+  it("forgets employees that were replaced", () => {
+    replaceAllEmployees(db, [validEmployee]);
+
+    replaceAllEmployees(db, [{ ...validEmployee, employeeNumber: "E00002", lastName: "Gupta" }]);
+
+    expect(names("sharma")).toEqual([]);
+  });
 });

@@ -17,7 +17,9 @@ function choose(label: string, option: string) {
 describe("EmployeeFilters", () => {
   it("reports the chosen country as its code", () => {
     const onChange = mock();
-    render(<EmployeeFilters options={options} value={{}} onChange={onChange} />);
+    render(
+      <EmployeeFilters options={options} value={{}} onChange={onChange} search="" onSearchChange={() => undefined} />,
+    );
 
     choose("Country", "India");
 
@@ -26,7 +28,15 @@ describe("EmployeeFilters", () => {
 
   it("clears a filter when All is chosen", () => {
     const onChange = mock();
-    render(<EmployeeFilters options={options} value={{ department: "Sales" }} onChange={onChange} />);
+    render(
+      <EmployeeFilters
+        options={options}
+        value={{ department: "Sales" }}
+        onChange={onChange}
+        search=""
+        onSearchChange={() => undefined}
+      />,
+    );
 
     choose("Department", "All departments");
 
@@ -34,7 +44,15 @@ describe("EmployeeFilters", () => {
   });
 
   it("shows the current job title", () => {
-    render(<EmployeeFilters options={options} value={{ jobTitle: "Data Analyst" }} onChange={() => undefined} />);
+    render(
+      <EmployeeFilters
+        options={options}
+        value={{ jobTitle: "Data Analyst" }}
+        onChange={() => undefined}
+        search=""
+        onSearchChange={() => undefined}
+      />,
+    );
 
     expect(screen.getByRole("combobox", { name: "Job title" }).textContent).toBe("Data Analyst");
   });

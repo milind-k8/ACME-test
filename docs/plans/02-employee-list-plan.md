@@ -132,10 +132,10 @@ The seed is part of Slice 1: it's the only way rows get into the database until 
   - `EmployeeFilters` gets a labelled search `Input`. `EmployeesPage` debounces it 250 ms, writes `q` to the URL, drops `page`. Each fetch has an `AbortController` so a slow older response can't overwrite a newer one.
 - **Libraries added:** none.
 - **Test list:**
-  - [ ] unit `to-fts-query`: `kri sha` → `"kri"* "sha"*` · `  ` → `null` · `a"b` → `"a""b"*`
-  - [ ] integration `employees.routes`: `q=krishna` prefix match · `q=jose` finds `José` · `q=kri sha` finds Krishna Sharma · `q` + `country` combined · `q` of `"`, `*`, `(`, `:`, `-` → 200 · whitespace `q` → same as none
-  - [ ] integration `employees.repository`: after an `UPDATE` of a name, search finds the new name (trigger works)
-  - [ ] component `EmployeesPage`: typing updates the list without Enter and resets to page 1 · `q` in the URL fills the box on load
+  - [x] unit `to-fts-query`: `kri sha` → `"kri"* "sha"*` · `  ` → `null` · `a"b` → `"a""b"*`
+  - [x] integration `employees.routes`: `q=krishna` prefix match · `q=jose` finds `José` · `q=kri sha` finds Krishna Sharma · `q` + `country` combined · `q` of `"`, `*`, `(`, `:`, `-` → 200 · whitespace `q` → same as none
+  - [x] integration `employees.repository`: after an `UPDATE` of a name, search finds the new name (trigger works)
+  - [x] component `EmployeesPage`: typing updates the list without Enter and resets to page 1 · `q` in the URL fills the box on load
 - **Quality checks:** no string concatenation of `q` into SQL
 
 ## Slice 5: Sorting

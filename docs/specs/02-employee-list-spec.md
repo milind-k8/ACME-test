@@ -43,14 +43,14 @@ The HR manager sees all employees in a paged table and finds people by name, cou
 - [x] Filtering by country, by department, and by job title each use an index (no `SCAN employees` in the query plan)
 
 ## Slice 4: Name search
-- [ ] `?q=krishna` returns employees whose first or last name starts with "krishna"
-- [ ] Search ignores letter case and accents (`jose` finds `José`)
-- [ ] Each word is a prefix: `kri sha` finds `Krishna Sharma`
-- [ ] Search combines with filters
-- [ ] Characters with special meaning in the search syntax (`"`, `*`, `(`, `:`, `-`) are treated as plain text and never return `500`
-- [ ] A blank or whitespace-only `q` is ignored
-- [ ] Typing in the search box updates the list without pressing Enter, and goes back to page 1
-- [ ] The search text is kept in the URL
+- [x] `?q=krishna` returns employees whose first or last name starts with "krishna"
+- [x] Search ignores letter case and accents (`jose` finds `José`)
+- [x] Each word is a prefix: `kri sha` finds `Krishna Sharma`
+- [x] Search combines with filters
+- [x] Characters with special meaning in the search syntax (`"`, `*`, `(`, `:`, `-`) are treated as plain text and never return `500`
+- [x] A blank or whitespace-only `q` is ignored
+- [x] Typing in the search box updates the list without pressing Enter, and goes back to page 1
+- [x] The search text is kept in the URL
 
 ## Slice 5: Sorting
 - [ ] `?sort=` accepts `name`, `salary`, `hiredAt`, `country`; any other value returns `400` `validation`

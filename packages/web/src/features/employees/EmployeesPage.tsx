@@ -11,6 +11,7 @@ import { EMPLOYEE_COPY } from "./employees.constants";
 import { Pagination } from "./Pagination";
 
 const SKELETON_ROWS = 8;
+const SEARCH_DEBOUNCE_MS = 250;
 const FILTER_NAMES: FilterName[] = ["country", "department", "jobTitle"];
 
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; page: Page<Employee> };
@@ -19,8 +20,11 @@ export function EmployeesPage() {
   const [params, setParams] = useQueryParams();
   const [state, setState] = useState<State>({ status: "loading" });
   const [options, setOptions] = useState<EmployeeFilterOptions | null>(null);
+  const [reloads, setReloads] = useState(0);
   // A string, so the effect re-runs when the URL changes, not on every render.
   const query = params.toString();
+  const urlSearch = params.get("q") ?? "";
+  const [search, setSearch] = useState(urlSearch);
 
   const fail = useCallback((err: unknown) => {
     // Anything that isn't an ApiError is a bug: rethrow inside React so the error boundary reports it.
@@ -33,17 +37,42 @@ export function EmployeesPage() {
     setState({ status: "error", message: err.message });
   }, []);
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    // Typing fires several requests; only the latest one may update the page.
+    let current = true;
     setState({ status: "loading" });
-    listEmployees(new URLSearchParams(query)).then((page) => {
-      setState({ status: "ready", page });
-    }, fail);
-  }, [query, fail]);
+    listEmployees(new URLSearchParams(query)).then(
+      (page) => {
+        if (current) setState({ status: "ready", page });
+      },
+      (err: unknown) => {
+        if (current) fail(err);
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [query, reloads, fail]);
 
-  useEffect(load, [load]);
   useEffect(() => {
     getFilterOptions().then(setOptions, fail);
   }, [fail]);
+
+  // Keep the box in step when the URL changes from elsewhere (Back, Clear filters).
+  useEffect(() => {
+    setSearch(urlSearch);
+  }, [urlSearch]);
+
+  // Write the typed text to the URL once typing pauses.
+  useEffect(() => {
+    if (search.trim() === urlSearch.trim()) return;
+    const timer = setTimeout(() => {
+      setParams({ q: search.trim() || undefined, page: undefined });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [search, urlSearch, setParams]);
 
   const filters = Object.fromEntries(FILTER_NAMES.map((name) => [name, params.get(name) ?? undefined]));
   // Any filter change starts again from page 1.
@@ -51,12 +80,20 @@ export function EmployeesPage() {
     setParams({ [name]: value, page: undefined });
   };
   const clearFilters = () => {
-    setParams(Object.fromEntries([...FILTER_NAMES, "page"].map((name) => [name, undefined])));
+    setParams(Object.fromEntries([...FILTER_NAMES, "q", "page"].map((name) => [name, undefined])));
   };
 
   return (
     <div className="flex flex-col gap-4">
-      {options && <EmployeeFilters options={options} value={filters} onChange={setFilter} />}
+      {options && (
+        <EmployeeFilters
+          options={options}
+          value={filters}
+          onChange={setFilter}
+          search={search}
+          onSearchChange={setSearch}
+        />
+      )}
       {state.status === "loading" && (
         <div role="status" aria-label={EMPLOYEE_COPY.loading} className="flex flex-col gap-3">
           {Array.from({ length: SKELETON_ROWS }, (_, i) => (
@@ -70,7 +107,13 @@ export function EmployeesPage() {
           className="flex items-center justify-between gap-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
           <span>{state.message}</span>
-          <Button variant="outline" size="sm" onClick={load}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setReloads((n) => n + 1);
+            }}
+          >
             {EMPLOYEE_COPY.retry}
           </Button>
         </div>
