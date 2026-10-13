@@ -1,6 +1,6 @@
 # Frontend
 
-How to build the UI. Read [development-process.md](development-process.md) first; this doc only adds what is specific to `src/web/`. If a component or colour isn't covered here, add it here first and then use it.
+How to build the UI. Read [development-process.md](development-process.md) first; this doc only adds what is specific to `packages/web/`. If a component or colour isn't covered here, add it here first and then use it.
 
 ## Stack
 
@@ -18,12 +18,12 @@ How to build the UI. Read [development-process.md](development-process.md) first
 **shadcn components used:** `Button`, `Input`, `Label`, `Select`, `Table`, `Dialog`, `AlertDialog`, `Card`, `Badge`, `Skeleton`.
 **Not used** (they pull in extra libraries): `Form` (react-hook-form + zod), `Chart` (Recharts), `Sonner`, the TanStack data-table.
 
-**Allowed dependencies:** `react`, `react-dom`, `@sentry/react` ([ADR-004](adrs/004-sentry-error-monitoring.md)), shadcn's peers (`@radix-ui/*` per component, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`). Dev: `tailwindcss`, `bun-plugin-tailwind`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `@happy-dom/global-registrator`.
+**Allowed dependencies:** `react`, `react-dom`, `@sentry/react` ([ADR-004](adrs/004-sentry-error-monitoring.md)), shadcn's peers (`@radix-ui/*` per component, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`). Dev: `tailwindcss`, `bun-plugin-tailwind`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `@testing-library/dom` (its required peer), `@happy-dom/global-registrator`.
 
 ## Folder layout
 
 ```
-src/web/
+packages/web/src/
 ├── index.html
 ├── main.tsx                createRoot + <App/>
 ├── App.tsx                 auth gate + router outlet

@@ -4,23 +4,24 @@ How the app is configured, built, run, and deployed. Read [development-process.m
 
 ## Packaging
 
-- **One `package.json`, no workspaces.** One Bun process serves the API and the frontend from one origin: one deployable, no CORS, and the `SameSite=Strict` cookie just works.
-- Bun version is pinned (`packageManager` field, Docker `oven/bun:1.4`).
-- Root files: `package.json`, `bunfig.toml`, `tsconfig.json`, `components.json` (shadcn), `eslint.config.js`, `Dockerfile`, `docker-compose.yml`.
-- Dev tooling dependencies: `typescript`, `@types/bun`, `eslint`, `typescript-eslint` (needed for ESLint to read TypeScript and for the no-`any` rules), `prettier`.
-- If web and server ever need separate deploys, split `server/`, `web/`, and `shared/` into Bun workspaces. The import rules already treat them as separate packages.
+- **Bun workspaces** ([ADR-005](adrs/005-separate-web-and-api-packages.md)): `packages/server` (`@smt/server`), `packages/web` (`@smt/web`), and `packages/shared` (`@smt/shared`, added with the first API type). One root `bun.lock`. Each package has its own `package.json`, `tsconfig.json`, and `Dockerfile`.
+- The browser always sees one origin: Caddy (in Compose) and `packages/web/dev-server.ts` (in dev) proxy `/api/*` to the API. No CORS, and the `SameSite=Strict` cookie just works.
+- Bun version is pinned (`packageManager: bun@1.4.3`, Docker `oven/bun:1.4.3-slim`). Caddy is pinned to `caddy:2.11.7-alpine`.
+- Root files: `package.json`, `bun.lock`, `tsconfig.base.json`, `eslint.config.js`, `docker-compose.yml`, `.env.example`.
+- Dev tooling dependencies (root): `typescript`, `@types/bun`, `eslint`, `typescript-eslint` (needed for ESLint to read TypeScript and for the no-`any` rules), `prettier`.
+- **TypeScript is pinned to 6.0.x**, not 7: typescript-eslint 8.71 supports `typescript <6.1.0`. Move to 7 once typescript-eslint supports it.
 
 ## Commands
 
 | Command | What it does |
 |---------|--------------|
 | `bun install` | Install dependencies |
-| `bun dev` | Start the server with hot reload (API + frontend) |
+| `bun dev` | Start the API (:3000) and web dev server (:5173, proxies `/api`) with hot reload |
 | `bun test` | Run all tests |
 | `bun run seed` | Reset the database and seed 10,000 employees |
 | `bun run backup` | Write a consistent copy of the database to `data/backups/` |
 | `bun run lint` / `bun run typecheck` | ESLint / `tsc --noEmit` |
-| `bun run build` and `bun start` | Production build and run |
+| `bun run build` | Production build of the web app (`packages/web/dist`). The API runs its TypeScript directly |
 | `bun audit` | Check installed dependencies against known vulnerabilities (CVEs) |
 | `bun run check` | All gates in one go: lint, typecheck, test, build, audit |
 
@@ -40,7 +41,7 @@ How the app is configured, built, run, and deployed. Read [development-process.m
 - **High / critical:** fix before the next commit or deploy. Upgrade the package (or the package that pulls it in), run `bun run check`, and commit as `fix(deps): …`. If no fixed version exists yet, write down why the risk is acceptable for now in the plan or an ADR, and check again weekly.
 - **Moderate / low:** fix in the next dependency update.
 - **Dependency updates:** `bun outdated` once a month. Upgrade one package per commit, so a breaking change is easy to find.
-- **Docker image:** the base image is pinned (`oven/bun:1.4`) and rebuilt on each deploy, so it picks up OS security patches.
+- **Docker images:** the base images are pinned (`oven/bun:1.4.3-slim`, `caddy:2.11.7-alpine`) and rebuilt on each deploy, so it picks up OS security patches.
 - `bun.lock` is always committed, so every install gets the exact versions that were audited.
 
 ## Environment variables
@@ -58,41 +59,29 @@ How the app is configured, built, run, and deployed. Read [development-process.m
 
 ## Docker Compose
 
-```yaml
-# docker-compose.yml (indicative)
-services:
-  app:
-    build: .               # oven/bun:1.4 image, bun install --production, bun run build
-    ports: ["3000:3000"]
-    env_file: .env
-    volumes:
-      - data:/app/data     # SQLite file survives restarts
-volumes:
-  data:
-```
+Two services, both built from the repo root (see `docker-compose.yml`):
 
-- `docker compose up` builds and starts the app. On first boot it creates the schema and seeds 10,000 employees if the database is empty.
-- One service and no database container, because SQLite is a file.
+| Service | Image | Role |
+|---------|-------|------|
+| `api` | `packages/server/Dockerfile` (Bun, non-root `bun` user) | Runs the API on 3000, internal only. SQLite file on the `data` volume |
+| `web` | `packages/web/Dockerfile` (Bun build stage → Caddy) | Serves the built SPA and proxies `/api/*` to `api:3000`. Published on host port 3000 |
+
+- `cp .env.example .env`, then `docker compose up --build`, then open http://localhost:3000. On first boot the API creates the schema and seeds 10,000 employees if the database is empty (once those slices exist).
+- No database container, because SQLite is a file.
 
 ## Deployment
 
-A single **VPS** running the same Docker Compose setup. Backend and frontend deploy together: the `app` container serves both the API and the built React app from one origin (see Packaging). Not a PaaS: SQLite is a file and needs a persistent disk, and a VPS gives that with no platform lock-in. Serverless hosts (e.g. Vercel) are ruled out because their filesystem is ephemeral.
+A single **VPS** running the same Docker Compose setup. Backend and frontend deploy together with one `docker compose up`; the `web` container serves the SPA and proxies the API, so it's one origin (see Packaging). Not a PaaS: SQLite is a file and needs a persistent disk, and a VPS gives that with no platform lock-in. Serverless hosts (e.g. Vercel) are ruled out because their filesystem is ephemeral.
 
-**HTTPS** is required: the auth cookie is `Secure` (ADR-003) and won't be sent over plain HTTP. A **Caddy** container in the same Compose file sits in front of the app as a reverse proxy and gets and renews Let's Encrypt certificates automatically. The app's port is not published to the host; only Caddy's 80/443 are.
+**HTTPS** is required: the auth cookie is `Secure` (ADR-003) and won't be sent over plain HTTP. The `web` container is already Caddy. For production, set its site address in `packages/web/Caddyfile` to the domain and publish 80/443, and Caddy gets and renews Let's Encrypt certificates automatically. The API's port is never published to the host.
 
 ```yaml
 # production additions (indicative)
 services:
-  app:
-    restart: unless-stopped
-    expose: ["3000"]            # internal only, no host port
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    ports: ["80:80", "443:443"]
+  web:
+    ports: ["80:80", "443:443"]   # instead of 3000:80; Caddyfile site address = the domain
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile   # salary.example.com { reverse_proxy app:3000 }
-      - caddy_data:/data                    # certificates
+      - caddy_data:/data          # certificates
 volumes:
   caddy_data:
 ```
@@ -105,7 +94,7 @@ volumes:
 
 **Deploying:** `bun run check` passes locally, then SSH in, `git pull`, `docker compose up -d --build`. The schema migrates on startup. A deploy is a few seconds of downtime, which is acceptable for an internal tool with one user.
 
-**Backups:** the VPS has no managed snapshots, so the database is backed up by a daily cron job that runs `docker compose exec app bun run backup`. That script runs SQLite's `VACUUM INTO '/app/data/backups/<date>.db'`, which makes a consistent copy while the app is running (copying the file directly can catch it mid-write). The cron job then copies the backup off the server. Restoring is replacing the file and restarting. Test a restore once.
+**Backups:** the VPS has no managed snapshots, so the database is backed up by a daily cron job that runs `docker compose exec api bun run backup`. That script runs SQLite's `VACUUM INTO '/app/data/backups/<date>.db'`, which makes a consistent copy while the app is running (copying the file directly can catch it mid-write). The cron job then copies the backup off the server. Restoring is replacing the file and restarting. Test a restore once.
 
 **Logs:** `docker compose logs`, with Docker's log rotation (`max-size`) so logs can't fill the disk. Errors also go to Sentry (ADR-004).
 

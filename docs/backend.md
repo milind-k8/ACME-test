@@ -1,6 +1,6 @@
 # Backend
 
-How to build the API, database, and seed. Read [development-process.md](development-process.md) first; this doc only adds what is specific to `src/server/`. Why Bun and its built-ins: [ADR-001](adrs/001-bun-react-sqlite.md).
+How to build the API, database, and seed. Read [development-process.md](development-process.md) first; this doc only adds what is specific to `packages/server/`. Why Bun and its built-ins: [ADR-001](adrs/001-bun-react-sqlite.md).
 
 ## Stack
 
@@ -24,14 +24,15 @@ A light MVC shape. Onion/hexagonal would be overkill without complex domain rule
 - **Pure functions** (`validate-*`, `median`, `generate-*`): no I/O. These hold the rules worth unit testing.
 - **Repositories** (`*.repository.ts`): the only place that touches SQL. Functions take `db` as their first argument. Rows map to `shared` types here.
 - No DI container. `db` is passed in as a plain argument, so tests can hand in `:memory:`.
-- `src/index.ts` and `routes.ts` are wiring only. If something there needs a test, it belongs somewhere else.
+- `index.ts` and `routes.ts` are wiring only. If something there needs a test, it belongs somewhere else.
 
 ## Folder layout
 
 ```
-src/
-├── index.ts                    entry point: Bun.serve({ routes, development }) — wiring only
-└── server/
+packages/server/
+├── package.json, tsconfig.json, Dockerfile
+└── src/
+    ├── index.ts                entry point: Bun.serve({ routes, development }) — wiring only
     ├── routes.ts               createRoutes(db, config): merges every feature's routes
     ├── config.ts               reads + validates env vars once (fails fast if JWT_SECRET is missing)
     ├── http/

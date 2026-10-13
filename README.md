@@ -2,7 +2,24 @@
 
 A web app for ACME's HR manager to manage salaries for about 10,000 employees across countries, and to answer questions about how the org pays people.
 
-_Setup instructions will be added once the code exists. Planned commands are in [devops.md](docs/devops.md#commands)._
+## Run it
+
+**Docker** (no Bun needed):
+
+```sh
+cp .env.example .env      # then set JWT_SECRET
+docker compose up --build # http://localhost:3000
+```
+
+**Local dev** (Bun 1.4.3):
+
+```sh
+bun install
+bun dev                   # API on :3000, web on http://localhost:5173 (proxies /api)
+bun run check             # lint, typecheck, test, build, audit
+```
+
+All commands: [devops.md](docs/devops.md#commands).
 
 ## Architecture
 
@@ -19,7 +36,7 @@ flowchart LR
   Seed["seed script"] --> DB
 ```
 
-One Bun process serves the API and the React app. Server and web share only `src/shared/` (API types and money helpers).
+Server and web are separate Bun workspaces ([ADR-005](docs/adrs/005-separate-web-and-api-packages.md)) and share only `packages/shared/` (API types and money helpers).
 
 ## Docs
 

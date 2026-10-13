@@ -22,7 +22,7 @@ The spec and the plan each end with `- [ ] Reviewed`. I tick it after reading an
 - **Slice by user-visible capability, not by layer.** "HR can log in" is a slice. "Create all the tables" is not. Specs and plans are vertical even though the area docs are horizontal.
 - **The first slice is a walking skeleton**: the thinnest path through UI, API, and DB. Each later slice adds one capability on top of the ones before.
 - A slice is small enough to finish in one sitting and can be tested on its own.
-- **Contract first.** Each slice starts by adding its request/response types to `src/shared/api-types.ts`. Backend and frontend work then proceed against those types.
+- **Contract first.** Each slice starts by adding its request/response types to `packages/shared/src/api-types.ts`. Backend and frontend work then proceed against those types.
 
 ## Depth depends on risk
 
@@ -63,7 +63,7 @@ Tooling enforces formatting and obvious mistakes: TypeScript strict mode, ESLint
 
 ## Cross-cutting conventions
 
-- **`src/shared/`** is pure code used by both sides (no Bun APIs, no DOM): `api-types.ts` (the API contract, one source of truth) and `money.ts` (`toMinor` / `fromMinor` / `formatMoney`). **Server and web never import each other; they only meet through `shared/`.** If the API changes, the types change and TypeScript flags every caller.
+- **`packages/shared/` (`@smt/shared`)** is pure code used by both sides (no Bun APIs, no DOM): `api-types.ts` (the API contract, one source of truth) and `money.ts` (`toMinor` / `fromMinor` / `formatMoney`). **Server and web never import each other; they only meet through `shared/`.** If the API changes, the types change and TypeScript flags every caller.
 - **Money**: integer minor units plus an ISO 4217 currency code. Never a float for a stored amount. Reports convert to USD through the `fx_rates` table, and every USD figure shows the rate date. ([ADR-002](adrs/002-salary-currency-and-usd-reporting.md))
 - **Error shape**: every error response is `{ error: { code, message, details? } }`. `400` validation (with `details` mapping each field to a message, e.g. `{ salary: "must be greater than 0" }`), `401` unauthenticated, `404` not found, `500` unexpected (logged, generic message).
 - **Dates**: stored as ISO strings, shown in the user's locale.
