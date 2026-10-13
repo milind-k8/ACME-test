@@ -1,11 +1,14 @@
 services:
   api:
     build: { context: ., dockerfile: packages/server/Dockerfile }
-    env_file: .env
+    # Secrets come from the environment: locally from .env (Compose reads it), on a server from its settings.
     environment:
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL is required}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
       DATABASE_PATH: /app/data/smt.db
       SEED_IF_EMPTY: "true" # demo only: seed 10,000 employees into a new, empty volume
-      TRUST_PROXY: "true" # Caddy is in front: the client address is the last X-Forwarded-For entry
+      TRUST_PROXY: "true" # Caddy is in front and sends the real client address as X-Real-IP
     expose: ["3000"]
     volumes:
       - data:/app/data # SQLite file survives restarts
@@ -16,7 +19,8 @@ services:
 
   web:
     build: { context: ., dockerfile: packages/web/Dockerfile }
-    ports: ["3000:80"]
+    # No host port here: docker-compose.override.yml adds 3000:80 for local use; a server's proxy routes to port 80.
+    expose: ["80"]
     depends_on: [api]
     restart: unless-stopped
     logging: *logging

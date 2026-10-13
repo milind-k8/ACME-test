@@ -1,0 +1,4 @@
+# Local only: docker compose loads this file automatically next to docker-compose.yml.
+services:
+  web:
+    ports: ["3000:80"]
