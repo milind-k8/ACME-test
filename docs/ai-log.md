@@ -15,3 +15,18 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
   - The `bun build` CLI silently skipped the Tailwind plugin, so the AI added a `build.ts` using `Bun.build`.
   - It dropped an empty `packages/shared` and an unused `databasePath` (YAGNI).
 
+## Login (2026-10-13)
+
+- **Asked for:** an implementation plan for login. The AI pointed out there was no spec yet, so it drafted [the spec](specs/01-login-spec.md) and [the plan](plans/01-login-plan.md) together for me to review.
+- **I decided:**
+  - Emails are stored lowercase.
+  - There's one demo account whose credentials I share with reviewers, with no sign-up, password change or second account.
+  - The cookie is always `Secure`.
+  - `JWT_SECRET` is required in every environment, and I supply it through `.env`.
+- **I changed process:** one branch per feature (`feat/login`), merged to `main` at the end.
+- **Built test-first** in three slices. Guard tests that passed straight away were checked by breaking the code on purpose.
+- **AI corrections:**
+  - `shadcn add` imported `cn` from an unrelated npm package and installed it, twice. The AI caught it in the diff, reverted the dependencies and used the planned `@radix-ui/react-*` packages.
+  - Bun's `cookies.delete` produced a logout cookie that didn't match the login cookie (`SameSite=Lax`, no `Secure`). It switched to clearing with the same attributes.
+  - It stopped dev servers with a broad `pkill` pattern that could have killed mine, then switched to killing only the processes it started.
+- **Left for later:** login rate limiting (ADR-003) and Sentry (ADR-004).
