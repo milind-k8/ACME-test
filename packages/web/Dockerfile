@@ -6,6 +6,7 @@ COPY packages/server/package.json packages/server/
 COPY packages/web/package.json packages/web/
 COPY packages/shared/package.json packages/shared/
 RUN bun install --frozen-lockfile --filter @smt/web
+COPY packages/shared packages/shared
 COPY packages/web packages/web
 WORKDIR /app/packages/web
 RUN bun run build
