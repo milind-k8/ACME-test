@@ -132,7 +132,9 @@ A work tool for someone who looks at numbers all day. It should feel **calm, den
 | Need | Use |
 |------|-----|
 | Employee list | `Table` with sticky header, server-side pagination, filters above the table. Salaries show in their own currency, but sort by USD value; the Salary header says so ("Salary · sorted in USD") |
+| Primary page action | Top-right of the page header, with a leading icon ("+ Add employee") |
 | Add / edit | `Dialog` with a plain `<form>` (`Input`, `Select`, `Label`). Server field errors under each field. Save disabled while submitting |
+| Row actions | A "⋯" icon button per row (`aria-label="More actions for <name>"`) opening a non-modal `DropdownMenu` with Edit and Delete (destructive). Non-modal so the dialog it opens can take focus |
 | Delete | `AlertDialog` that names the employee |
 | Feedback | Own `Toast` for success; inline alert for page-level errors |
 | Loading | `Skeleton` rows, never a blank screen |

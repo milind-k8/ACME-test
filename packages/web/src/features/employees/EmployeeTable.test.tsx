@@ -17,6 +17,12 @@ const priya: Employee = {
 };
 const noop = () => undefined;
 
+// Edit and Delete live in each row's "⋯" menu.
+async function chooseRowAction(name: string, action: "Edit" | "Delete") {
+  fireEvent.keyDown(await screen.findByRole("button", { name: `More actions for ${name}` }), { key: "Enter" });
+  fireEvent.click(await screen.findByRole("menuitem", { name: action }));
+}
+
 describe("EmployeeTable", () => {
   it("asks to sort by a column when its header is clicked", () => {
     const onSort = mock();
@@ -52,22 +58,22 @@ describe("EmployeeTable", () => {
     expect(screen.getByRole("button", { name: /Salary/ }).textContent).toContain("Salary · sorted in USD");
   });
 
-  it("offers an Edit action on each row, named for the employee", () => {
+  it("offers Edit in each row's actions menu", async () => {
     const onEdit = mock();
     render(<EmployeeTable employees={[priya]} sort="name" order="asc" onSort={noop} onEdit={onEdit} onDelete={noop} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Priya Sharma" }));
+    await chooseRowAction("Priya Sharma", "Edit");
 
     expect(onEdit).toHaveBeenCalledWith(priya);
   });
 
-  it("offers a Delete action on each row, named for the employee", () => {
+  it("offers Delete in each row's actions menu", async () => {
     const onDelete = mock();
     render(
       <EmployeeTable employees={[priya]} sort="name" order="asc" onSort={noop} onEdit={noop} onDelete={onDelete} />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Priya Sharma" }));
+    await chooseRowAction("Priya Sharma", "Delete");
 
     expect(onDelete).toHaveBeenCalledWith(priya);
   });
