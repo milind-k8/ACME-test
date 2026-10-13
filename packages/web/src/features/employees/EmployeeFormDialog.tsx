@@ -1,5 +1,5 @@
 import { useState, type SubmitEvent } from "react";
-import type { EmployeeFormOptions, EmployeeInput } from "@smt/shared/api-types";
+import type { Employee, EmployeeFormOptions, EmployeeInput } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ApiError } from "@/lib/api";
-import { formatCountry } from "@/lib/format";
+import { formatCountry, formatMajor } from "@/lib/format";
 import { FORM_COPY } from "./employees.constants";
 
 type Field = keyof EmployeeInput;
@@ -29,16 +29,31 @@ const EMPTY: EmployeeInput = {
   hiredAt: "",
 };
 
+function toInput(employee: Employee): EmployeeInput {
+  return {
+    firstName: employee.firstName,
+    lastName: employee.lastName,
+    jobTitle: employee.jobTitle,
+    department: employee.department,
+    country: employee.country,
+    currency: employee.currency,
+    salary: formatMajor(employee.salaryMinor, employee.currency),
+    hiredAt: employee.hiredAt,
+  };
+}
+
 interface EmployeeFormDialogProps {
   open: boolean;
+  /** Given when editing; the form starts with its details. */
+  employee?: Employee;
   options: EmployeeFormOptions;
   onOpenChange: (open: boolean) => void;
   /** Rejects with an ApiError whose `details` name the bad fields. */
   onSubmit: (input: EmployeeInput) => Promise<void>;
 }
 
-export function EmployeeFormDialog({ open, options, onOpenChange, onSubmit }: EmployeeFormDialogProps) {
-  const [values, setValues] = useState<EmployeeInput>(EMPTY);
+export function EmployeeFormDialog({ open, employee, options, onOpenChange, onSubmit }: EmployeeFormDialogProps) {
+  const [values, setValues] = useState<EmployeeInput>(employee ? toInput(employee) : EMPTY);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -131,7 +146,7 @@ export function EmployeeFormDialog({ open, options, onOpenChange, onSubmit }: Em
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{FORM_COPY.addTitle}</DialogTitle>
+          <DialogTitle>{employee ? FORM_COPY.editTitle(employee) : FORM_COPY.addTitle}</DialogTitle>
           <DialogDescription>{FORM_COPY.description}</DialogDescription>
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>

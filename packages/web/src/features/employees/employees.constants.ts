@@ -7,6 +7,13 @@ export const EMPLOYEE_COLUMNS = {
   country: "Country",
   salary: "Salary · sorted in USD",
   hiredAt: "Hired",
+  actions: "Actions",
+} as const;
+
+type Named = { firstName: string; lastName: string };
+export const ROW_ACTIONS = {
+  editLabel: "Edit",
+  edit: (e: Named) => `Edit ${e.firstName} ${e.lastName}`,
 } as const;
 
 export const EMPLOYEE_COPY = {
@@ -17,6 +24,7 @@ export const EMPLOYEE_COPY = {
   noMatches: "No employees match these filters.",
   clearFilters: "Clear filters",
   added: "Employee added",
+  updated: "Employee updated",
 } as const;
 
 export const PAGINATION_COPY = {
@@ -34,6 +42,8 @@ export const FILTER_COPY = {
 
 export const FORM_COPY = {
   addTitle: "Add employee",
+  editTitle: (e: { firstName: string; lastName: string; employeeNumber: string }) =>
+    `Edit ${e.firstName} ${e.lastName} (${e.employeeNumber})`,
   description: "Salary is the annual gross, in the currency the employee is paid in.",
   firstName: "First name",
   lastName: "Last name",

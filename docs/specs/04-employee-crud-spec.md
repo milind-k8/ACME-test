@@ -25,12 +25,12 @@ HR adds a new hire, corrects or updates an employee (most often their salary), a
 - [x] Save is disabled while the request is in flight
 
 ## Slice 2: HR edits an employee
-- [ ] `PUT /api/employees/:id` with valid fields returns `200` with the updated employee; the employee number is unchanged
-- [ ] It applies the same validation as create
-- [ ] An unknown or non-numeric `id` returns `404`
-- [ ] Each row has an "Edit" action that opens the form filled with that employee's values, salary shown in major units
-- [ ] Saving shows "Employee updated" and the row shows the new values
-- [ ] The search index follows a changed name
+- [x] `PUT /api/employees/:id` with valid fields returns `200` with the updated employee; the employee number is unchanged
+- [x] It applies the same validation as create
+- [x] An unknown or non-numeric `id` returns `404`
+- [x] Each row has an "Edit" action that opens the form filled with that employee's values, salary shown in major units
+- [x] Saving shows "Employee updated" and the row shows the new values
+- [x] The search index follows a changed name
 
 ## Slice 3: HR removes someone who has left
 - [ ] `DELETE /api/employees/:id` returns `204` and the employee no longer appears in the list or search

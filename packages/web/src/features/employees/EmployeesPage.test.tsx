@@ -26,7 +26,14 @@ const getFormOptions = mock<() => Promise<EmployeeFormOptions>>(() =>
   Promise.resolve({ departments: ["Data"], countries: [{ code: "IN", currency: "INR" }], currencies: ["INR"] }),
 );
 const createEmployee = mock<(input: EmployeeInput) => Promise<Employee>>(() => Promise.resolve(priya));
-void mock.module("./employees.api", () => ({ listEmployees, getFilterOptions, getFormOptions, createEmployee }));
+const updateEmployee = mock<(id: number, input: EmployeeInput) => Promise<Employee>>(() => Promise.resolve(priya));
+void mock.module("./employees.api", () => ({
+  listEmployees,
+  getFilterOptions,
+  getFormOptions,
+  createEmployee,
+  updateEmployee,
+}));
 const { EmployeesPage } = await import("./EmployeesPage");
 
 const requestedPages = () => listEmployees.mock.calls.map(([params]) => params.get("page"));
@@ -240,5 +247,20 @@ describe("EmployeesPage", () => {
     });
     expect(listEmployees.mock.calls.length).toBeGreaterThan(listCalls);
     expect(getFilterOptions.mock.calls.length).toBeGreaterThan(filterCalls);
+  });
+
+  it("edits an employee from their row and confirms it", async () => {
+    render(<EmployeesPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Priya Sharma" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("Job title"), { target: { value: "Staff Engineer" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Employee updated")).toBeTruthy();
+    expect(updateEmployee).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ jobTitle: "Staff Engineer", salary: "3000000.00" }),
+    );
   });
 });

@@ -334,3 +334,66 @@ describe("GET /api/employees/form-options", () => {
     expect((await fetch(`${server.url}/api/employees/form-options`)).status).toBe(401);
   });
 });
+
+describe("PUT /api/employees/:id", () => {
+  const original = stored[0] as Employee;
+  const input: EmployeeInput = {
+    firstName: "Renamed",
+    lastName: "Person",
+    jobTitle: "Engineering Manager",
+    department: "Engineering",
+    country: "US",
+    currency: "USD",
+    salary: "210000",
+    hiredAt: "2015-06-01",
+  };
+
+  const put = (id: string | number, body: unknown, cookie = server.loginCookie) =>
+    fetch(`${server.url}/api/employees/${String(id)}`, {
+      method: "PUT",
+      headers: { Cookie: cookie, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  it("updates the employee and keeps their employee number", async () => {
+    const res = await put(original.id, input);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      id: original.id,
+      employeeNumber: original.employeeNumber,
+      firstName: "Renamed",
+      lastName: "Person",
+      jobTitle: "Engineering Manager",
+      department: "Engineering",
+      country: "US",
+      currency: "USD",
+      salaryMinor: 21_000_000,
+      hiredAt: "2015-06-01",
+    });
+  });
+
+  it("finds the employee by their new name", async () => {
+    await put(original.id, input);
+
+    const body = (await (await getEmployees("?q=renamed")).json()) as Page<Employee>;
+    expect(body.items.map((e) => e.id)).toEqual([original.id]);
+  });
+
+  it("returns 400 with the bad fields", async () => {
+    const res = await put(original.id, { ...input, currency: "XXX" });
+
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: { details: Record<string, string> } }).error.details).toHaveProperty(
+      "currency",
+    );
+  });
+
+  it.each(["99999", "abc", "1.5", "-1"])("returns 404 for id %p", async (id) => {
+    expect((await put(id, input)).status).toBe(404);
+  });
+
+  it("returns 401 without a session", async () => {
+    expect((await put(original.id, input, "")).status).toBe(401);
+  });
+});

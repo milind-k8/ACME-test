@@ -65,3 +65,10 @@ export function validateEmployee(body: unknown, ref: EmployeeReferenceData, toda
   if (Object.keys(errors).length > 0 || salaryMinor === null) return { ok: false, errors };
   return { ok: true, value: { firstName, lastName, jobTitle, department, country, currency, salaryMinor, hiredAt } };
 }
+
+/** A path id: digits only, so "1.5", "-1" and "abc" are treated as not found. */
+export function parseId(raw: string): number | null {
+  if (!/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
+  return Number.isSafeInteger(id) ? id : null;
+}

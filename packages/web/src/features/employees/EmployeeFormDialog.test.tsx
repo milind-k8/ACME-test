@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { EmployeeFormOptions, EmployeeInput } from "@smt/shared/api-types";
+import type { Employee, EmployeeFormOptions, EmployeeInput } from "@smt/shared/api-types";
 import { ApiError } from "@/lib/api";
 import { EmployeeFormDialog } from "./EmployeeFormDialog";
 
@@ -103,5 +103,36 @@ describe("EmployeeFormDialog", () => {
     await waitFor(() => {
       expect(save().disabled).toBe(false);
     });
+  });
+
+  it("opens filled with an employee's details when editing, salary in major units", () => {
+    const priya: Employee = {
+      id: 7,
+      employeeNumber: "E00007",
+      firstName: "Priya",
+      lastName: "Sharma",
+      jobTitle: "Software Engineer",
+      department: "Engineering",
+      country: "IN",
+      salaryMinor: 300_000_050,
+      currency: "INR",
+      hiredAt: "2020-01-15",
+    };
+    render(
+      <EmployeeFormDialog
+        open
+        employee={priya}
+        options={options}
+        onOpenChange={() => undefined}
+        onSubmit={() => Promise.resolve()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Edit Priya Sharma (E00007)" })).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>("First name").value).toBe("Priya");
+    expect(screen.getByLabelText<HTMLInputElement>("Annual salary").value).toBe("3000000.50");
+    expect(screen.getByLabelText<HTMLInputElement>("Hire date").value).toBe("2020-01-15");
+    expect(screen.getByRole("combobox", { name: "Department" }).textContent).toBe("Engineering");
+    expect(screen.getByRole("combobox", { name: "Currency" }).textContent).toBe("INR");
   });
 });

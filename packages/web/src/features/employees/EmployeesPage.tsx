@@ -16,7 +16,7 @@ import { useQueryParams } from "@/lib/router";
 import { EmployeeFilters, type FilterName } from "./EmployeeFilters";
 import { EmployeeFormDialog } from "./EmployeeFormDialog";
 import { EmployeeTable } from "./EmployeeTable";
-import { createEmployee, getFilterOptions, getFormOptions, listEmployees } from "./employees.api";
+import { createEmployee, getFilterOptions, getFormOptions, listEmployees, updateEmployee } from "./employees.api";
 import { EMPLOYEE_COPY, FORM_COPY } from "./employees.constants";
 import { Pagination } from "./Pagination";
 
@@ -32,7 +32,8 @@ export function EmployeesPage() {
   const [options, setOptions] = useState<EmployeeFilterOptions | null>(null);
   const [reloads, setReloads] = useState(0);
   const [formOptions, setFormOptions] = useState<EmployeeFormOptions | null>(null);
-  const [adding, setAdding] = useState(false);
+  // The open form: a new hire, or the employee being edited.
+  const [form, setForm] = useState<{ employee?: Employee } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => {
     setToast(null);
@@ -80,10 +81,12 @@ export function EmployeesPage() {
   }, [fail]);
 
   // Errors propagate to the dialog, which shows them per field.
-  const addEmployee = async (input: EmployeeInput) => {
-    await createEmployee(input);
-    setAdding(false);
-    setToast(EMPLOYEE_COPY.added);
+  const saveEmployee = async (input: EmployeeInput) => {
+    const editing = form?.employee;
+    if (editing) await updateEmployee(editing.id, input);
+    else await createEmployee(input);
+    setForm(null);
+    setToast(editing ? EMPLOYEE_COPY.updated : EMPLOYEE_COPY.added);
     setReloads((n) => n + 1);
   };
 
@@ -132,20 +135,23 @@ export function EmployeesPage() {
         <Button
           disabled={!formOptions}
           onClick={() => {
-            setAdding(true);
+            setForm({});
           }}
         >
           {FORM_COPY.addTitle}
         </Button>
       </div>
       {formOptions && (
-        // Keyed by open state, so each new form starts empty.
+        // Keyed by what's open, so each form starts from that employee's details (or empty).
         <EmployeeFormDialog
-          key={String(adding)}
-          open={adding}
+          key={form ? String(form.employee?.id ?? "new") : "closed"}
+          open={form !== null}
+          employee={form?.employee}
           options={formOptions}
-          onOpenChange={setAdding}
-          onSubmit={addEmployee}
+          onOpenChange={(open) => {
+            if (!open) setForm(null);
+          }}
+          onSubmit={saveEmployee}
         />
       )}
       {toast && <Toast message={toast} onDone={hideToast} />}
@@ -194,7 +200,15 @@ export function EmployeesPage() {
         <>
           {/* A flex column, so the table container can take the remaining height without a percentage. */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background shadow-xs">
-            <EmployeeTable employees={state.page.items} sort={sort} order={order} onSort={changeSort} />
+            <EmployeeTable
+              employees={state.page.items}
+              sort={sort}
+              order={order}
+              onSort={changeSort}
+              onEdit={(employee) => {
+                setForm({ employee });
+              }}
+            />
             <Pagination
               page={state.page.page}
               pageSize={state.page.pageSize}

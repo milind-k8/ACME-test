@@ -165,3 +165,26 @@ export function getReferenceData(db: Database): EmployeeFormOptions {
       .map((row) => row.currency),
   };
 }
+
+/** Replaces an employee's details; the employee number never changes. Returns null if there's no such id. */
+export function updateEmployee(db: Database, id: number, input: Omit<NewEmployee, "employeeNumber">): Employee | null {
+  const { changes } = db
+    .query(
+      `UPDATE employees
+       SET first_name = ?, last_name = ?, job_title = ?, department = ?, country = ?,
+           salary_minor = ?, currency = ?, hired_at = ?
+       WHERE id = ?`,
+    )
+    .run(
+      input.firstName,
+      input.lastName,
+      input.jobTitle,
+      input.department,
+      input.country,
+      input.salaryMinor,
+      input.currency,
+      input.hiredAt,
+      id,
+    );
+  return changes === 0 ? null : getEmployee(db, id);
+}

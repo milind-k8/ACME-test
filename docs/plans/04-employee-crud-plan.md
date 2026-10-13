@@ -72,9 +72,9 @@ Spec: [04-employee-crud-spec.md](../specs/04-employee-crud-spec.md) · Decisions
 - **Frontend:** `EmployeeTable` gets an actions column with "Edit" (`aria-label="Edit Priya Sharma"`); the dialog pre-fills, salary via `formatMajor(minor, currency)` (no grouping, e.g. `85000.50`). `employees.api.ts`: `updateEmployee(id, input)`.
 - **Libraries added:** none.
 - **Test list:**
-  - [ ] integration routes: PUT valid → 200, number unchanged · invalid → 400 · unknown id and `abc` → 404 · renamed employee found by search
-  - [ ] unit `lib/format`: `formatMajor(8500050, "USD")` → `"85000.50"` · `formatMajor(85000, "JPY")` → `"85000"`
-  - [ ] component: Edit opens the dialog with the row's values · saving shows "Employee updated"
+  - [x] integration routes: PUT valid → 200, number unchanged · invalid → 400 · unknown id and `abc` → 404 · renamed employee found by search
+  - [x] unit `lib/format`: `formatMajor(8500050, "USD")` → `"85000.50"` · `formatMajor(85000, "JPY")` → `"85000"`
+  - [x] component: Edit opens the dialog with the row's values · saving shows "Employee updated"
 
 ## Slice 3: HR removes someone who has left
 

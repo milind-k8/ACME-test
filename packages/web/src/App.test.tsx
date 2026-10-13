@@ -30,6 +30,7 @@ void mock.module("./features/employees/employees.api", () => ({
   getFilterOptions,
   getFormOptions,
   createEmployee,
+  updateEmployee: createEmployee,
 }));
 const { App } = await import("./App");
 
