@@ -75,8 +75,8 @@ GET /api/employees/filters
 ```
 
 ## Out of scope
-- Add, edit, and delete (spec 03).
-- Insights and USD figures in the list (spec 04). The list shows the pay currency only.
+- Add, edit, and delete (the CRUD spec).
+- Insights and USD figures in the list (the insights spec). The list shows the pay currency only.
 - Typo-tolerant search (`krisna` → `Krishna`). See backend.md → Search.
 - Multi-select filters, salary range filters, and column picking.
 - Excel import/export (requirements → Not doing).

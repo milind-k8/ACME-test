@@ -56,3 +56,12 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
   - The shadcn CLI again added `cn`, `radix-ui` and `lucide-react` for Select and DropdownMenu; it removed them each time.
 - **Found along the way:** my local `.env` has the Docker `DATABASE_PATH`, so `bun run seed` and `bun dev` can't open the database on macOS. There's no Prettier config in the repo.
 - **Left for later:** seeding an empty database on first Docker boot (devops.md mentions it), and typo-tolerant search.
+
+## Seed on boot (2026-10-13)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** a fresh `docker compose up` that shows data without a manual seed, as devops.md already promised. **I chose** a separate small change rather than folding it into CRUD.
+- **I decided:** seeding is opt-in through `SEED_IF_EMPTY`, on only in Compose. The AI pointed out that "seed whenever empty" would bring back 10,000 fake people after HR deletes everyone, once CRUD exists.
+- **Built test-first:** config parsing (only `true`/`false`, anything else stops startup) and `seedIfEmpty` (identical rows to `bun run seed`, untouched when data exists).
+- **Checked in Docker** under a separate Compose project, so the fresh volume it needed didn't wipe my existing one.

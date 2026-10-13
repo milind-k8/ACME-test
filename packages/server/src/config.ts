@@ -4,9 +4,18 @@ export interface Config {
   jwtSecret: string;
   adminEmail: string;
   adminPassword: string;
+  /** Seed the demo employees at startup when the table is empty. Off unless SEED_IF_EMPTY=true. */
+  seedIfEmpty: boolean;
 }
 
 type Env = Record<string, string | undefined>;
+
+function booleanFlag(env: Env, name: string): boolean {
+  const value = env[name];
+  if (value === undefined || value === "false") return false;
+  if (value === "true") return true;
+  throw new Error(`${name} must be true or false`);
+}
 
 function required(env: Env, name: string): string {
   const value = env[name];
@@ -24,5 +33,6 @@ export function loadConfig(env: Env): Config {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("PORT must be an integer between 1 and 65535");
   }
-  return { port, databasePath: env.DATABASE_PATH ?? "smt.db", jwtSecret, adminEmail, adminPassword };
+  const seedIfEmpty = booleanFlag(env, "SEED_IF_EMPTY");
+  return { port, databasePath: env.DATABASE_PATH ?? "smt.db", jwtSecret, adminEmail, adminPassword, seedIfEmpty };
 }

@@ -13,6 +13,7 @@ export const TEST_CONFIG: Config = {
   jwtSecret: "test-secret",
   adminEmail: TEST_ADMIN.email,
   adminPassword: TEST_ADMIN.password,
+  seedIfEmpty: false,
 };
 
 // argon2id is slow on purpose (~100 ms), so hash once per test process instead of once per server.

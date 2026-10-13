@@ -4,6 +4,7 @@ services:
     env_file: .env
     environment:
       DATABASE_PATH: /app/data/smt.db
+      SEED_IF_EMPTY: "true" # demo only: seed 10,000 employees into a new, empty volume
     expose: ["3000"]
     volumes:
       - data:/app/data # SQLite file survives restarts
