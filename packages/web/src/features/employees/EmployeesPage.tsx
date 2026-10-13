@@ -10,6 +10,7 @@ import {
 } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlusIcon } from "@/components/icons/PlusIcon";
 import { Toast } from "@/components/Toast";
 import { ApiError } from "@/lib/api";
 import { useQueryParams } from "@/lib/router";
@@ -161,6 +162,7 @@ export function EmployeesPage() {
             setForm({});
           }}
         >
+          <PlusIcon />
           {FORM_COPY.addTitle}
         </Button>
       </div>

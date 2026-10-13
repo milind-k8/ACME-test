@@ -46,6 +46,12 @@ beforeEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
+// Edit and Delete live in each row's "⋯" menu.
+async function chooseRowAction(name: string, action: "Edit" | "Delete") {
+  fireEvent.keyDown(await screen.findByRole("button", { name: `More actions for ${name}` }), { key: "Enter" });
+  fireEvent.click(await screen.findByRole("menuitem", { name: action }));
+}
+
 describe("EmployeesPage", () => {
   it("shows each employee as a table row", async () => {
     render(<EmployeesPage />);
@@ -254,7 +260,7 @@ describe("EmployeesPage", () => {
   it("edits an employee from their row and confirms it", async () => {
     render(<EmployeesPage />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Edit Priya Sharma" }));
+    await chooseRowAction("Priya Sharma", "Edit");
     const dialog = await screen.findByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText("Job title"), { target: { value: "Staff Engineer" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -271,7 +277,7 @@ describe("EmployeesPage", () => {
     await screen.findByRole("row", { name: /E00001/ });
     const listCalls = listEmployees.mock.calls.length;
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Priya Sharma" }));
+    await chooseRowAction("Priya Sharma", "Delete");
     fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
 
     expect(await screen.findByText("Employee deleted")).toBeTruthy();
@@ -290,7 +296,7 @@ describe("EmployeesPage", () => {
     );
     render(<EmployeesPage />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Delete Priya Sharma" }));
+    await chooseRowAction("Priya Sharma", "Delete");
     fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
 
     await waitFor(() => {

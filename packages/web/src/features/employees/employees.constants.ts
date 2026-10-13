@@ -12,10 +12,9 @@ export const EMPLOYEE_COLUMNS = {
 
 type Named = { firstName: string; lastName: string };
 export const ROW_ACTIONS = {
-  editLabel: "Edit",
-  edit: (e: Named) => `Edit ${e.firstName} ${e.lastName}`,
-  deleteLabel: "Delete",
-  delete: (e: Named) => `Delete ${e.firstName} ${e.lastName}`,
+  menu: (e: Named) => `More actions for ${e.firstName} ${e.lastName}`,
+  edit: "Edit",
+  delete: "Delete",
 } as const;
 
 export const EMPLOYEE_COPY = {
