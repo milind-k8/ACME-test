@@ -1,6 +1,5 @@
 export interface Config {
   port: number;
-  databasePath: string;
   jwtSecret: string;
 }
 
@@ -13,5 +12,5 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("PORT must be an integer between 1 and 65535");
   }
-  return { port, databasePath: "", jwtSecret: jwtSecret ?? "" };
+  return { port, jwtSecret: jwtSecret ?? "" };
 }
