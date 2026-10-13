@@ -9,4 +9,15 @@ export const EMPLOYEE_MESSAGES = {
   pageSize: `must be a whole number from 1 to ${String(MAX_PAGE_SIZE)}`,
   sort: `must be one of ${EMPLOYEE_SORTS.join(", ")}`,
   order: `must be ${SORT_ORDERS.join(" or ")}`,
+  invalidEmployee: "Some employee details are invalid",
+  required: "is required",
+  department: "must be one of the departments",
+  country: "must be one of the supported countries",
+  currency: "must be one of the supported currencies",
+  salary: (decimals: number) =>
+    decimals === 0
+      ? "must be a positive whole amount"
+      : `must be a positive amount with at most ${String(decimals)} decimals`,
+  hiredAt: "must be a real date (YYYY-MM-DD)",
+  futureHire: "can't be in the future",
 } as const;

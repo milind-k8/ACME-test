@@ -1,8 +1,9 @@
 import type { Employee, EmployeeSort, SortOrder } from "@smt/shared/api-types";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatCountry, formatMoney } from "@/lib/format";
-import { EMPLOYEE_COLUMNS } from "./employees.constants";
+import { EMPLOYEE_COLUMNS, ROW_ACTIONS } from "./employees.constants";
 
 const HEAD = "text-xs font-medium tracking-wide text-muted-foreground uppercase";
 
@@ -12,9 +13,11 @@ interface EmployeeTableProps {
   sort: EmployeeSort | undefined;
   order: SortOrder;
   onSort: (sort: EmployeeSort) => void;
+  onEdit: (employee: Employee) => void;
+  onDelete: (employee: Employee) => void;
 }
 
-export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableProps) {
+export function EmployeeTable({ employees, sort, order, onSort, onEdit, onDelete }: EmployeeTableProps) {
   const sortable = (column: EmployeeSort, label: string, className?: string) => (
     <TableHead
       className={cn(HEAD, className)}
@@ -46,6 +49,9 @@ export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableP
           {sortable("country", EMPLOYEE_COLUMNS.country)}
           {sortable("salary", EMPLOYEE_COLUMNS.salary, "text-right")}
           {sortable("hiredAt", EMPLOYEE_COLUMNS.hiredAt)}
+          <TableHead className={HEAD}>
+            <span className="sr-only">{EMPLOYEE_COLUMNS.actions}</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -60,6 +66,29 @@ export function EmployeeTable({ employees, sort, order, onSort }: EmployeeTableP
             <TableCell>{formatCountry(e.country)}</TableCell>
             <TableCell className="text-right tabular-nums">{formatMoney(e.salaryMinor, e.currency)}</TableCell>
             <TableCell className="tabular-nums">{e.hiredAt}</TableCell>
+            <TableCell className="text-right whitespace-nowrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={ROW_ACTIONS.edit(e)}
+                onClick={() => {
+                  onEdit(e);
+                }}
+              >
+                {ROW_ACTIONS.editLabel}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={ROW_ACTIONS.delete(e)}
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  onDelete(e);
+                }}
+              >
+                {ROW_ACTIONS.deleteLabel}
+              </Button>
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

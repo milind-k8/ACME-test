@@ -23,7 +23,16 @@ const listEmployees = mock<() => Promise<Page<Employee>>>(() =>
   Promise.resolve({ items: [employee], total: 1, page: 1, pageSize: 50 }),
 );
 const getFilterOptions = mock(() => Promise.resolve({ countries: [], departments: [], jobTitles: [] }));
-void mock.module("./features/employees/employees.api", () => ({ listEmployees, getFilterOptions }));
+const getFormOptions = mock(() => Promise.resolve({ departments: [], countries: [], currencies: [] }));
+const createEmployee = mock(() => Promise.resolve(employee));
+void mock.module("./features/employees/employees.api", () => ({
+  listEmployees,
+  getFilterOptions,
+  getFormOptions,
+  createEmployee,
+  updateEmployee: createEmployee,
+  deleteEmployee: mock(() => Promise.resolve()),
+}));
 const { App } = await import("./App");
 
 // The email and Log out live in a menu behind the user's initial in the header.

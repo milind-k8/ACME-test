@@ -3,17 +3,29 @@ import {
   EMPLOYEE_SORTS,
   type Employee,
   type EmployeeFilterOptions,
+  type EmployeeFormOptions,
+  type EmployeeInput,
   type EmployeeSort,
   type Page,
 } from "@smt/shared/api-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Toast } from "@/components/Toast";
 import { ApiError } from "@/lib/api";
 import { useQueryParams } from "@/lib/router";
+import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
 import { EmployeeFilters, type FilterName } from "./EmployeeFilters";
+import { EmployeeFormDialog } from "./EmployeeFormDialog";
 import { EmployeeTable } from "./EmployeeTable";
-import { getFilterOptions, listEmployees } from "./employees.api";
-import { EMPLOYEE_COPY } from "./employees.constants";
+import {
+  createEmployee,
+  deleteEmployee,
+  getFilterOptions,
+  getFormOptions,
+  listEmployees,
+  updateEmployee,
+} from "./employees.api";
+import { EMPLOYEE_COPY, FORM_COPY } from "./employees.constants";
 import { Pagination } from "./Pagination";
 
 const SKELETON_ROWS = 8;
@@ -27,6 +39,14 @@ export function EmployeesPage() {
   const [state, setState] = useState<State>({ status: "loading" });
   const [options, setOptions] = useState<EmployeeFilterOptions | null>(null);
   const [reloads, setReloads] = useState(0);
+  const [formOptions, setFormOptions] = useState<EmployeeFormOptions | null>(null);
+  // The open form: a new hire, or the employee being edited.
+  const [form, setForm] = useState<{ employee?: Employee } | null>(null);
+  const [deleting, setDeleting] = useState<Employee | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const hideToast = useCallback(() => {
+    setToast(null);
+  }, []);
   // A string, so the effect re-runs when the URL changes, not on every render.
   const query = params.toString();
   const urlSearch = params.get("q") ?? "";
@@ -60,9 +80,38 @@ export function EmployeesPage() {
     };
   }, [query, reloads, fail]);
 
+  // Reloaded after every save, so a new job title shows up in the filter.
   useEffect(() => {
     getFilterOptions().then(setOptions, fail);
+  }, [fail, reloads]);
+
+  useEffect(() => {
+    getFormOptions().then(setFormOptions, fail);
   }, [fail]);
+
+  // Errors propagate to the dialog, which shows them per field.
+  const saveEmployee = async (input: EmployeeInput) => {
+    const editing = form?.employee;
+    if (editing) await updateEmployee(editing.id, input);
+    else await createEmployee(input);
+    setForm(null);
+    setToast(editing ? EMPLOYEE_COPY.updated : EMPLOYEE_COPY.added);
+    setReloads((n) => n + 1);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    await deleteEmployee(deleting.id);
+    setDeleting(null);
+    setToast(EMPLOYEE_COPY.deleted);
+    // The last row on a page beyond the first leaves that page empty, so step back one.
+    const current = state.status === "ready" ? state.page : null;
+    if (current && current.items.length === 1 && current.page > 1) {
+      setParams({ page: current.page > 2 ? String(current.page - 1) : undefined });
+    } else {
+      setReloads((n) => n + 1);
+    }
+  };
 
   // Keep the box in step when the URL changes from elsewhere (Back, Clear filters).
   useEffect(() => {
@@ -101,10 +150,43 @@ export function EmployeesPage() {
   return (
     // Filters and pagination stay put; only the table area scrolls.
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">{EMPLOYEE_COPY.title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{EMPLOYEE_COPY.subtitle}</p>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">{EMPLOYEE_COPY.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{EMPLOYEE_COPY.subtitle}</p>
+        </div>
+        <Button
+          disabled={!formOptions}
+          onClick={() => {
+            setForm({});
+          }}
+        >
+          {FORM_COPY.addTitle}
+        </Button>
       </div>
+      {formOptions && (
+        // Keyed by what's open, so each form starts from that employee's details (or empty).
+        <EmployeeFormDialog
+          key={form ? String(form.employee?.id ?? "new") : "closed"}
+          open={form !== null}
+          employee={form?.employee}
+          options={formOptions}
+          onOpenChange={(open) => {
+            if (!open) setForm(null);
+          }}
+          onSubmit={saveEmployee}
+        />
+      )}
+      <DeleteEmployeeDialog
+        // Keyed by employee, so a new delete starts without the last one's error.
+        key={deleting?.id ?? "none"}
+        employee={deleting}
+        onConfirm={confirmDelete}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+      />
+      {toast && <Toast message={toast} onDone={hideToast} />}
       {options && (
         <EmployeeFilters
           options={options}
@@ -150,7 +232,16 @@ export function EmployeesPage() {
         <>
           {/* A flex column, so the table container can take the remaining height without a percentage. */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background shadow-xs">
-            <EmployeeTable employees={state.page.items} sort={sort} order={order} onSort={changeSort} />
+            <EmployeeTable
+              employees={state.page.items}
+              sort={sort}
+              order={order}
+              onSort={changeSort}
+              onEdit={(employee) => {
+                setForm({ employee });
+              }}
+              onDelete={setDeleting}
+            />
             <Pagination
               page={state.page.page}
               pageSize={state.page.pageSize}

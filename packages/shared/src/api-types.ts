@@ -53,3 +53,23 @@ export type EmployeeSort = (typeof EMPLOYEE_SORTS)[number];
 
 export const SORT_ORDERS = ["asc", "desc"] as const;
 export type SortOrder = (typeof SORT_ORDERS)[number];
+
+/** The body of a create or update. Salary is a decimal string in major units, so no float crosses the API. */
+export interface EmployeeInput {
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  department: string;
+  country: string;
+  currency: string;
+  /** Major units, e.g. "85000.50" */
+  salary: string;
+  /** YYYY-MM-DD */
+  hiredAt: string;
+}
+
+export interface EmployeeFormOptions {
+  departments: string[];
+  countries: { code: string; currency: string }[];
+  currencies: string[];
+}

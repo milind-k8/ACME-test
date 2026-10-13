@@ -1,5 +1,12 @@
 import type { Database } from "bun:sqlite";
-import type { Employee, EmployeeFilterOptions, EmployeeSort, NewEmployee, Page } from "@smt/shared/api-types";
+import type {
+  Employee,
+  EmployeeFilterOptions,
+  EmployeeFormOptions,
+  EmployeeSort,
+  NewEmployee,
+  Page,
+} from "@smt/shared/api-types";
 import { toFtsQuery } from "./to-fts-query";
 import { EMPLOYEE_FILTERS, type EmployeeFilter, type EmployeeListQuery } from "./validate-list-query";
 
@@ -102,4 +109,87 @@ export function listFilterOptions(db: Database): EmployeeFilterOptions {
 
 export function countEmployees(db: Database): number {
   return db.query<{ total: number }, []>("SELECT count(*) AS total FROM employees").get()?.total ?? 0;
+}
+
+const EMPLOYEE_COLUMNS = `id, employee_number AS employeeNumber, first_name AS firstName, last_name AS lastName,
+  job_title AS jobTitle, department, country, salary_minor AS salaryMinor, currency, hired_at AS hiredAt`;
+
+export function getEmployee(db: Database, id: number): Employee | null {
+  return db.query<Employee, [number]>(`SELECT ${EMPLOYEE_COLUMNS} FROM employees WHERE id = ?`).get(id);
+}
+
+/** Inserts a new hire with the next employee number (E00001, E00002, …). */
+export function createEmployee(db: Database, input: Omit<NewEmployee, "employeeNumber">): Employee {
+  // One transaction, so two creates can't read the same highest number.
+  return db.transaction(() => {
+    const highest =
+      db
+        .query<{ n: number | null }, []>("SELECT max(CAST(substr(employee_number, 2) AS INTEGER)) AS n FROM employees")
+        .get()?.n ?? 0;
+    const employeeNumber = `E${String(highest + 1).padStart(5, "0")}`;
+    const { lastInsertRowid } = db
+      .query(
+        `INSERT INTO employees
+           (employee_number, first_name, last_name, job_title, department, country, salary_minor, currency, hired_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        employeeNumber,
+        input.firstName,
+        input.lastName,
+        input.jobTitle,
+        input.department,
+        input.country,
+        input.salaryMinor,
+        input.currency,
+        input.hiredAt,
+      );
+    const created = getEmployee(db, Number(lastInsertRowid));
+    if (!created) throw new Error("Inserted employee not found");
+    return created;
+  })();
+}
+
+export function getReferenceData(db: Database): EmployeeFormOptions {
+  return {
+    departments: db
+      .query<{ name: string }, []>("SELECT name FROM departments ORDER BY name")
+      .all()
+      .map((row) => row.name),
+    countries: db
+      .query<{ code: string; currency: string }, []>("SELECT code, currency FROM countries ORDER BY code")
+      .all(),
+    currencies: db
+      .query<{ currency: string }, []>("SELECT currency FROM fx_rates ORDER BY currency")
+      .all()
+      .map((row) => row.currency),
+  };
+}
+
+/** Replaces an employee's details; the employee number never changes. Returns null if there's no such id. */
+export function updateEmployee(db: Database, id: number, input: Omit<NewEmployee, "employeeNumber">): Employee | null {
+  const { changes } = db
+    .query(
+      `UPDATE employees
+       SET first_name = ?, last_name = ?, job_title = ?, department = ?, country = ?,
+           salary_minor = ?, currency = ?, hired_at = ?
+       WHERE id = ?`,
+    )
+    .run(
+      input.firstName,
+      input.lastName,
+      input.jobTitle,
+      input.department,
+      input.country,
+      input.salaryMinor,
+      input.currency,
+      input.hiredAt,
+      id,
+    );
+  return changes === 0 ? null : getEmployee(db, id);
+}
+
+/** Removes the row (no soft delete). Returns false if there's no such id. */
+export function deleteEmployee(db: Database, id: number): boolean {
+  return db.query("DELETE FROM employees WHERE id = ?").run(id).changes > 0;
 }
