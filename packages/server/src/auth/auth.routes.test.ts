@@ -134,3 +134,52 @@ describe("POST /api/logout", () => {
     expect(attributes).toEqual(["httponly", "max-age=0", "path=/", "samesite=strict", "secure"]);
   });
 });
+
+describe("POST /api/login rate limit", () => {
+  const wrong = { email: TEST_ADMIN.email, password: "wrong-password" };
+  const right = { email: TEST_ADMIN.email, password: TEST_ADMIN.password };
+  const failFiveTimes = async () => {
+    for (let i = 0; i < 5; i++) expect((await postLogin(wrong)).status).toBe(401);
+  };
+
+  it("refuses the 6th failed attempt in 15 minutes with 429 and Retry-After", async () => {
+    await failFiveTimes();
+
+    const res = await postLogin(wrong);
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("900");
+    expect(await res.json()).toEqual({
+      error: { code: "too_many_attempts", message: "Too many login attempts. Try again in 15 minutes." },
+    });
+  });
+
+  it("refuses even the right password while limited, and sets no cookie", async () => {
+    await failFiveTimes();
+
+    const res = await postLogin(right);
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Set-Cookie")).toBeNull();
+  });
+
+  it("lets the client try again after 15 minutes", async () => {
+    await failFiveTimes();
+    clock = new Date(loginTime.getTime() + 15 * 60_000);
+
+    expect((await postLogin(right)).status).toBe(200);
+  });
+
+  it("clears earlier failures after a successful login", async () => {
+    for (let i = 0; i < 4; i++) await postLogin(wrong);
+    await postLogin(right);
+
+    await failFiveTimes();
+  });
+
+  it("doesn't count requests that fail validation", async () => {
+    for (let i = 0; i < 10; i++) expect((await postLogin({ email: TEST_ADMIN.email })).status).toBe(400);
+
+    expect((await postLogin(wrong)).status).toBe(401);
+  });
+});

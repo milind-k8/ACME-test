@@ -43,4 +43,16 @@ describe("loadConfig", () => {
   it.each(["yes", "1", "TRUE", ""])("throws when SEED_IF_EMPTY is %p", (value) => {
     expect(() => loadConfig({ ...validEnv, SEED_IF_EMPTY: value })).toThrow("SEED_IF_EMPTY must be true or false");
   });
+
+  it.each([
+    [undefined, false],
+    ["true", true],
+    ["false", false],
+  ])("reads TRUST_PROXY=%p as %p", (value, expected) => {
+    expect(loadConfig({ ...validEnv, TRUST_PROXY: value }).trustProxy).toBe(expected);
+  });
+
+  it("throws when TRUST_PROXY isn't true or false", () => {
+    expect(() => loadConfig({ ...validEnv, TRUST_PROXY: "yes" })).toThrow("TRUST_PROXY must be true or false");
+  });
 });

@@ -52,6 +52,7 @@ How the app is configured, built, run, and deployed. Read [development-process.m
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Required. The single demo HR account, reset to these values on every start |
 | `DATABASE_PATH` | SQLite file path. Defaults to `smt.db`; Compose sets `/app/data/smt.db` |
 | `PORT` | Defaults to 3000 |
+| `TRUST_PROXY` | `true` reads the client address for the login rate limit from the last `X-Forwarded-For` entry. Only for when the API sits behind our own proxy (Compose sets it); otherwise the header is ignored, so a client can't pick its own address |
 | `SEED_IF_EMPTY` | `true` seeds the 10,000 demo employees at startup if the table is empty. Off by default; only Compose turns it on, so a real deployment never gets demo data |
 | `SENTRY_DSN` | Server error reporting. Set in production only; unset means Sentry is off |
 | `BUN_PUBLIC_SENTRY_DSN` | Browser error reporting, inlined into the bundle at build time. Production only |
