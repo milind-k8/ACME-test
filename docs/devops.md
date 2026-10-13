@@ -52,6 +52,7 @@ How the app is configured, built, run, and deployed. Read [development-process.m
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Required. The single demo HR account, reset to these values on every start |
 | `DATABASE_PATH` | SQLite file path. Defaults to `smt.db`; Compose sets `/app/data/smt.db` |
 | `PORT` | Defaults to 3000 |
+| `SEED_IF_EMPTY` | `true` seeds the 10,000 demo employees at startup if the table is empty. Off by default; only Compose turns it on, so a real deployment never gets demo data |
 | `SENTRY_DSN` | Server error reporting. Set in production only; unset means Sentry is off |
 | `BUN_PUBLIC_SENTRY_DSN` | Browser error reporting, inlined into the bundle at build time. Production only |
 
@@ -66,7 +67,7 @@ Two services, both built from the repo root (see `docker-compose.yml`):
 | `api` | `packages/server/Dockerfile` (Bun, non-root `bun` user) | Runs the API on 3000, internal only. SQLite file on the `data` volume |
 | `web` | `packages/web/Dockerfile` (Bun build stage → Caddy) | Serves the built SPA and proxies `/api/*` to `api:3000`. Published on host port 3000 |
 
-- `cp .env.example .env`, then `docker compose up --build`, then open http://localhost:3000. On first boot the API creates the schema and seeds 10,000 employees if the database is empty (once those slices exist).
+- `cp .env.example .env`, then `docker compose up --build`, then open http://localhost:3000. On first boot the API creates the schema and, because Compose sets `SEED_IF_EMPTY=true`, seeds 10,000 employees into the empty database.
 - No database container, because SQLite is a file.
 
 ## Deployment

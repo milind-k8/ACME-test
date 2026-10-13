@@ -31,4 +31,16 @@ describe("loadConfig", () => {
   it("reads the database path from DATABASE_PATH", () => {
     expect(loadConfig({ ...validEnv, DATABASE_PATH: "/data/x.db" }).databasePath).toBe("/data/x.db");
   });
+
+  it.each([
+    [undefined, false],
+    ["true", true],
+    ["false", false],
+  ])("reads SEED_IF_EMPTY=%p as %p", (value, expected) => {
+    expect(loadConfig({ ...validEnv, SEED_IF_EMPTY: value }).seedIfEmpty).toBe(expected);
+  });
+
+  it.each(["yes", "1", "TRUE", ""])("throws when SEED_IF_EMPTY is %p", (value) => {
+    expect(() => loadConfig({ ...validEnv, SEED_IF_EMPTY: value })).toThrow("SEED_IF_EMPTY must be true or false");
+  });
 });

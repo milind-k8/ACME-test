@@ -99,3 +99,7 @@ export function listFilterOptions(db: Database): EmployeeFilterOptions {
       .map((row) => row.value);
   return { countries: distinct("country"), departments: distinct("department"), jobTitles: distinct("job_title") };
 }
+
+export function countEmployees(db: Database): number {
+  return db.query<{ total: number }, []>("SELECT count(*) AS total FROM employees").get()?.total ?? 0;
+}
