@@ -12,6 +12,8 @@ import { validateLogin } from "./validate-login";
 const DUMMY_HASH =
   "$argon2id$v=19$m=65536,t=2,p=1$wdGgjEgwOqxF03MG4Hh10BtDcNianr6dGXviUYG5rVM$NyO8mAZyhUCR9tlBfnT0r9VP8J3Yh4tbwHDnizhBXZo";
 
+const SESSION_COOKIE = { httpOnly: true, secure: true, sameSite: "strict", path: "/" } as const;
+
 export function authRoutes(db: Database, config: Config, now: () => Date) {
   return {
     "/api/login": {
@@ -30,13 +32,17 @@ export function authRoutes(db: Database, config: Config, now: () => Date) {
         }
         const session: SessionUser = { email: user.email };
         req.cookies.set("session", await signToken(session, config.jwtSecret, now()), {
-          httpOnly: true,
-          secure: true,
-          sameSite: "strict",
-          path: "/",
+          ...SESSION_COOKIE,
           maxAge: SESSION_SECONDS,
         });
         return json(session);
+      },
+    },
+    // Not behind withAuth: an expired session must still be able to clear its cookie.
+    "/api/logout": {
+      POST: (req: BunRequest) => {
+        req.cookies.set("session", "", { ...SESSION_COOKIE, maxAge: 0 });
+        return new Response(null, { status: 204 });
       },
     },
     "/api/me": {
