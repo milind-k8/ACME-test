@@ -78,3 +78,19 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
   - The shadcn CLI again added `cn` and `radix-ui` for Dialog, and for AlertDialog it stopped at a prompt to overwrite `button.tsx`. The AI removed the packages and wrote `alert-dialog.tsx` by hand.
   - It pulled the form-options endpoint forward from Slice 4 when the add form needed it, and noted the change.
   - It gave the route tests a fixed clock once "no future hire dates" made them depend on the real date.
+
+## Dashboard (2026-10-13)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** a dashboard with the stats HR needs most, with filters, as the first page. **I added** total payroll, pay per department, hires in the last 12 months, and average tenure, and asked for **charts and graphs**, not just text.
+- **I chose Recharts** (through shadcn's Chart) over hand-built SVG, recorded as ADR-006.
+- **I pushed on query design** so I can defend it in an interview. The AI benchmarked four approaches on the seeded data instead of assuming: one sorted query grouped in code took 5.2 ms; window-function medians in SQL took 37–57 ms; SQL `GROUP BY` without medians took 6.9 ms. Embedded SQLite has no network hop to save, and medians in SQL need a sort per group. Recorded as ADR-007, with when the answer would flip (Postgres over a network, millions of rows).
+- **I asked for caching without stale data.** The AI prototyped SQLite's own counters first (`total_changes()` for this connection, `PRAGMA data_version` for others), showed every kind of write moves them, and kept today's date in the key for the date-based figures. The version is read before the query. Recorded as ADR-008; tests break the invalidation on purpose to prove they'd catch it.
+- **Built test-first** in seven slices, plus a 10,000-row performance test (6.4 ms uncached).
+- **AI corrections:**
+  - Its first charts showed no bars in screenshots: a full-page capture resizes the window and restarts the animation. It measured the bars instead of guessing, then switched to viewport captures.
+  - The charts' screen-reader lists made the whole page scrollable; it measured the document height and made each figure `position: relative`.
+  - The Median and Average labels collided in the same band, and the histogram's axis labels ran together; it merged the markers and shortened the ticks.
+  - shadcn's chart file failed the strict lint; it trimmed it to what's used rather than loosening the lint.
+  - The shadcn CLI again added `cn`, `lucide-react`, an unrequested `card.tsx`, and an unpinned older Recharts; all removed or pinned.

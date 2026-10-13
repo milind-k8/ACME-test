@@ -104,19 +104,47 @@ Query design: [ADR-007](../adrs/007-dashboard-aggregation.md); caching: [ADR-008
   - `dashboard.routes.ts`: key = sorted filter params + today; `version` read first, then `cache.get` or compute and `cache.set`. One cache per `dashboardRoutes(db, …)` call, so each test server starts empty.
 - **Libraries added:** none.
 - **Test list:**
-  - [ ] unit `response-cache`: same version and key → hit · new version → miss and old entries gone · 101st key evicts the least recently used, not the most recently read
-  - [ ] integration `dashboard.repository`: `dataVersion` changes after an insert through `db`, and after a write by a second `Database` on the same temp file; unchanged after a read
-  - [ ] integration `dashboard.routes`: second identical request doesn't call the query (counted with a spy on the repository function) · POST then GET shows the new headcount · a second connection's delete then GET shows it · advancing the injected clock by a day recomputes tenure
+  - [x] unit `response-cache`: same version and key → hit · new version → miss and old entries gone · 101st key evicts the least recently used, not the most recently read
+  - [x] integration `dashboard.repository`: `dataVersion` changes after an insert through `db`, and after a write by a second `Database` on the same temp file; unchanged after a read
+  - [x] integration `dashboard.routes`: second identical request doesn't call the query (counted with a spy on the repository function) · POST then GET shows the new headcount · a second connection's delete then GET shows it · advancing the injected clock by a day recomputes tenure
 - **Quality checks:** version read before the query · no TTL anywhere
 
 ## Performance
-- [ ] integration: 10,000 seeded employees, `GET /api/dashboard` logic (repository + `summarize`) under 50 ms (median of 5) with no filters and with each filter
+- [x] integration: 10,000 seeded employees, `GET /api/dashboard` logic (repository + `summarize`) under 50 ms (median of 5) with no filters and with each filter
 
 ## Query design
 Decided in [ADR-007](../adrs/007-dashboard-aggregation.md) with measurements: one filtered, USD-converted query sorted by salary, grouped in a single pass in `summarize.ts`. 5.2 ms unfiltered at 10,000 rows, against 37–57 ms for window-function medians in SQL.
 
 ## As built
-_Filled in after the build._
+
+Built on branch `feat/dashboard` across all seven slices. `bun run check` passes with 272 server and 85 web tests. Every chart was checked in headless Chrome against the dev server, unfiltered and filtered.
+
+**Measured:** the whole dashboard, uncached, in 6.4 ms at 10,000 employees (budget 50 ms); a cache hit is a `Map` lookup after a 1.6 µs version read.
+
+**Files**
+- shared: `PayStats`, `DashboardSummary`, `SalaryBand`, `MonthlyHires`, `Dashboard`; `EMPLOYEE_FILTERS` / `EmployeeFilter` / `EmployeeFilters` moved here from the server; route `dashboard`
+- server:
+  - `dashboard/summarize.ts` (`median`, `payStats`, `summarize`, `groupBy`, `salaryBands`, `hiresByMonth`)
+  - `dashboard/dashboard.repository.ts` (`listPay`, `fxAsOf`, `dataVersion`), `dashboard/response-cache.ts`, `dashboard/dashboard.routes.ts`
+  - `test-support/query-plans.ts` (shared `queryPlans` / `fullScans`, extracted from the employees test); `startTestServer({ databasePath })`
+- web:
+  - `lib/router.ts`: `usePath`, `navigate`; `App.tsx` routes `/` → Dashboard, `/employees` → Employees; `AppShell` nav with `ChartIcon`
+  - `lib/format.ts`: `formatUsd`
+  - `features/dashboard/`: `DashboardPage`, `StatTile`, `PayTable`, `HorizontalBarChart`, `ColumnChart`, `dashboard.api.ts`, `dashboard.constants.ts`
+  - `components/FilterBar.tsx` (moved from `features/employees/EmployeeFilters.tsx`; search optional)
+  - `components/ui/chart.tsx` (shadcn, trimmed)
+
+**Libraries:** `recharts` 3.10.1 and `react-is` 19.3.0, pinned exact (ADR-006).
+
+**Differences from the plan, and why**
+- **Two chart components instead of four** (`HorizontalBarChart` for country and department, `ColumnChart` for the histogram and hires): each pair differed only in data and formatting.
+- **`chart.tsx` is trimmed** to `ChartContainer`, `ChartStyle`, `ChartTooltip` and a small typed `ChartTooltipContent`. shadcn's own tooltip and legend use `any`, which the lint forbids, and single-series charts need no legend.
+- **The shadcn CLI installed `recharts` 3.8.0 with a range**, plus `cn`, `lucide-react`, and an unused `card.tsx`. All replaced or removed; Recharts pinned to the ADR's 3.10.1.
+- **Bars are sorted by their value** (median per country); the tables keep the API's largest-headcount order.
+- **Markers on the same band merge** into one "Median & Average" line; axis ticks use short labels (`$25K`, `Nov`) while tooltips and the screen-reader list keep the full ones.
+- **Chart figures are `position: relative`.** Their `sr-only` lists are absolutely positioned; without a positioned ancestor they stretched the document past the viewport and made the whole page scroll.
+- **"No employees match" replaces the figures** when the headcount is 0, rather than showing zeros and empty charts.
+- **The day-change cache test crosses midnight** (23:00 → 01:00) instead of jumping a year, which would also expire the test's 8-hour session.
 
 ---
 - [x] Reviewed
