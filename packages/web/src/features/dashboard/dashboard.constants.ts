@@ -28,4 +28,9 @@ export const CHART_COPY = {
   medianByCountry: "Median pay by country",
   payByCountry: "Pay per country",
   country: "Country",
+  headcountByDepartment: "Headcount by department",
+  payByDepartment: "Pay per department",
+  department: "Department",
+  payByJobTitle: "Pay per job title",
+  jobTitle: "Job title",
 } as const;

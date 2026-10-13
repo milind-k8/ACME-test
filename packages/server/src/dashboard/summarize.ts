@@ -61,10 +61,14 @@ export function summarize(rows: readonly PayRow[], today: string): DashboardSumm
 type GroupField = "country" | "department" | "jobTitle";
 
 /**
- * Stats per value of `field`, largest headcount first (ties alphabetical). One pass: the rows arrive sorted by
+ * Stats per value of `field`, largest headcount (or highest median) first, ties alphabetical. One pass: the rows arrive sorted by
  * salary, so appending keeps every group's list sorted and its median is the middle element (ADR-007).
  */
-export function groupBy<F extends GroupField>(rows: readonly PayRow[], field: F): (PayStats & Record<F, string>)[] {
+export function groupBy<F extends GroupField>(
+  rows: readonly PayRow[],
+  field: F,
+  orderBy: "headcount" | "median" = "headcount",
+): (PayStats & Record<F, string>)[] {
   const groups = new Map<string, number[]>();
   for (const r of rows) {
     const key = r[field];
@@ -74,5 +78,9 @@ export function groupBy<F extends GroupField>(rows: readonly PayRow[], field: F)
   }
   return [...groups]
     .map(([key, sorted]) => ({ [field]: key, ...payStats(sorted) }) as PayStats & Record<F, string>)
-    .sort((a, b) => b.headcount - a.headcount || (a[field] < b[field] ? -1 : 1));
+    .sort(
+      (a, b) =>
+        (orderBy === "median" ? b.medianUsdCents - a.medianUsdCents : b.headcount - a.headcount) ||
+        (a[field] < b[field] ? -1 : 1),
+    );
 }

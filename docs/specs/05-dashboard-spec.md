@@ -24,13 +24,13 @@ The first page HR sees: the numbers they're asked for most, in USD from the date
 - [x] A bar chart shows the median salary per country in USD
 
 ## Slice 3: Pay per department
-- [ ] The response has one row per department with the same figures, largest headcount first
-- [ ] The page shows them as a table
-- [ ] A bar chart shows headcount per department
+- [x] The response has one row per department with the same figures, largest headcount first
+- [x] The page shows them as a table
+- [x] A bar chart shows headcount per department
 
 ## Slice 4: Pay per job title
-- [ ] The response has one row per job title with the same figures, highest median first
-- [ ] The page shows them as a table
+- [x] The response has one row per job title with the same figures, highest median first
+- [x] The page shows them as a table
 
 ## Slice 5: Salary distribution and hiring
 - [ ] The response has a salary distribution: headcount per $25,000 USD band from $0 up to "$200,000+", with every band present (zeros included)

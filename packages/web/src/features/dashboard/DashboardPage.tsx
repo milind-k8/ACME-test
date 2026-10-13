@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
 import { formatCountry, formatUsd } from "@/lib/format";
+
+const compactUsd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact" });
+const formatUsdCompact = (cents: number) => compactUsd.format(cents / 100);
 import { useQueryParams } from "@/lib/router";
 import { getDashboard } from "./dashboard.api";
 import { CHART_COPY, DASHBOARD_COPY } from "./dashboard.constants";
-import { MedianPayChart } from "./MedianPayChart";
+import { HorizontalBarChart } from "./HorizontalBarChart";
 import { PayTable } from "./PayTable";
 import { StatTile } from "./StatTile";
 
@@ -91,10 +94,13 @@ export function DashboardPage() {
       {state.status === "ready" && (
         <section className="flex flex-col gap-4">
           {/* Bars read best sorted by their own value; the table keeps the API's largest-headcount order. */}
-          <MedianPayChart
+          <HorizontalBarChart
+            title={CHART_COPY.medianByCountry}
             rows={state.data.byCountry
-              .map((c) => ({ label: formatCountry(c.country), medianUsdCents: c.medianUsdCents }))
-              .sort((a, b) => b.medianUsdCents - a.medianUsdCents)}
+              .map((c) => ({ label: formatCountry(c.country), value: c.medianUsdCents }))
+              .sort((a, b) => b.value - a.value)}
+            formatValue={formatUsd}
+            formatTick={formatUsdCompact}
           />
           <PayTable
             caption={CHART_COPY.payByCountry}
@@ -102,6 +108,24 @@ export function DashboardPage() {
             rows={state.data.byCountry}
             groupOf={(c) => c.country}
             format={formatCountry}
+          />
+          <HorizontalBarChart
+            title={CHART_COPY.headcountByDepartment}
+            rows={state.data.byDepartment.map((d) => ({ label: d.department, value: d.headcount }))}
+            formatValue={(n) => count.format(n)}
+            formatTick={(n) => count.format(n)}
+          />
+          <PayTable
+            caption={CHART_COPY.payByDepartment}
+            groupLabel={CHART_COPY.department}
+            rows={state.data.byDepartment}
+            groupOf={(d) => d.department}
+          />
+          <PayTable
+            caption={CHART_COPY.payByJobTitle}
+            groupLabel={CHART_COPY.jobTitle}
+            rows={state.data.byJobTitle}
+            groupOf={(j) => j.jobTitle}
           />
         </section>
       )}

@@ -26,6 +26,28 @@ const dashboard: Dashboard = {
       maxUsdCents: 15_000_000,
     },
   ],
+  byDepartment: [
+    {
+      department: "Engineering",
+      headcount: 3_120,
+      payrollUsdCents: 30_000_000_000,
+      minUsdCents: 2_000_000,
+      medianUsdCents: 9_000_000,
+      avgUsdCents: 9_615_385,
+      maxUsdCents: 25_000_000,
+    },
+  ],
+  byJobTitle: [
+    {
+      jobTitle: "Engineering Manager",
+      headcount: 480,
+      payrollUsdCents: 7_200_000_000,
+      minUsdCents: 6_000_000,
+      medianUsdCents: 15_000_000,
+      avgUsdCents: 15_000_000,
+      maxUsdCents: 25_000_000,
+    },
+  ],
 };
 
 const getDashboard = mock<(params: URLSearchParams) => Promise<Dashboard>>(() => Promise.resolve(dashboard));
@@ -83,5 +105,22 @@ describe("DashboardPage", () => {
       "India: $45,000",
     );
     expect(screen.getByRole("table", { name: "Pay per country" }).textContent).toContain("India");
+  });
+
+  it("shows headcount per department as a chart and pay per department as a table", async () => {
+    render(<DashboardPage />);
+
+    expect((await screen.findByRole("figure", { name: "Headcount by department" })).textContent).toContain(
+      "Engineering: 3,120",
+    );
+    expect(screen.getByRole("table", { name: "Pay per department" }).textContent).toContain("Engineering");
+  });
+
+  it("shows pay per job title as a table", async () => {
+    render(<DashboardPage />);
+
+    expect((await screen.findByRole("table", { name: "Pay per job title" })).textContent).toContain(
+      "Engineering Manager",
+    );
   });
 });

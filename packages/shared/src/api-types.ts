@@ -95,6 +95,8 @@ export interface Dashboard {
   fxAsOf: string;
   summary: DashboardSummary;
   byCountry: (PayStats & { country: string })[];
+  byDepartment: (PayStats & { department: string })[];
+  byJobTitle: (PayStats & { jobTitle: string })[];
 }
 
 /** The list and the dashboard filter on the same three fields. */

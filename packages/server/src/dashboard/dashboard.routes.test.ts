@@ -67,6 +67,28 @@ describe("GET /api/dashboard", () => {
         { country: "JP", ...one(4_355_000) },
         { country: "US", ...one(15_000_000) },
       ],
+      byDepartment: [
+        {
+          department: "Engineering",
+          headcount: 3,
+          payrollUsdCents: 22_955_000,
+          minUsdCents: 3_600_000,
+          medianUsdCents: 4_355_000,
+          avgUsdCents: 7_651_667,
+          maxUsdCents: 15_000_000,
+        },
+      ],
+      byJobTitle: [
+        {
+          jobTitle: "Software Engineer",
+          headcount: 3,
+          payrollUsdCents: 22_955_000,
+          minUsdCents: 3_600_000,
+          medianUsdCents: 4_355_000,
+          avgUsdCents: 7_651_667,
+          maxUsdCents: 15_000_000,
+        },
+      ],
     });
   });
 

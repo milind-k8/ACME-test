@@ -47,6 +47,8 @@ const getDashboard = mock(() =>
       avgTenureYears: 0,
     },
     byCountry: [],
+    byDepartment: [],
+    byJobTitle: [],
   }),
 );
 void mock.module("./features/dashboard/dashboard.api", () => ({ getDashboard }));

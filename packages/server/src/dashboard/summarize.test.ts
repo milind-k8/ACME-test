@@ -89,4 +89,11 @@ describe("groupBy", () => {
   it("breaks headcount ties alphabetically", () => {
     expect(groupBy([at("US", 1), at("DE", 2)], "country").map((g) => g.country)).toEqual(["DE", "US"]);
   });
+
+  it("can order groups by median instead, highest first", () => {
+    const titled = (jobTitle: string, usdCents: number): PayRow => ({ ...row(usdCents, "2020-01-01"), jobTitle });
+    const rows = [titled("Analyst", 100), titled("Engineer", 300), titled("Analyst", 120), titled("Manager", 500)];
+
+    expect(groupBy(rows, "jobTitle", "median").map((g) => g.jobTitle)).toEqual(["Manager", "Engineer", "Analyst"]);
+  });
 });

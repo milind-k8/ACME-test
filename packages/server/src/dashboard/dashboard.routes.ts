@@ -18,6 +18,8 @@ export function dashboardRoutes(db: Database, config: Config, now: () => Date) {
           fxAsOf: fxAsOf(db),
           summary: summarize(rows, today),
           byCountry: groupBy(rows, "country"),
+          byDepartment: groupBy(rows, "department"),
+          byJobTitle: groupBy(rows, "jobTitle", "median"),
         };
         return json(dashboard);
       }),

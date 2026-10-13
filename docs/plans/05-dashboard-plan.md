@@ -66,15 +66,15 @@ Query design: [ADR-007](../adrs/007-dashboard-aggregation.md); caching: [ADR-008
 - **Backend:** `byDepartment`, largest headcount first.
 - **Frontend:** a second `PayTable`; `features/dashboard/HeadcountChart.tsx` (horizontal bars, one per department).
 - **Test list:**
-  - [ ] unit `summarize`: `byDepartment`
-  - [ ] component `HeadcountChart`: renders a figure titled "Headcount by department" with an `sr-only` list of each department and its count
+  - [x] unit `summarize`: `byDepartment`
+  - [x] component `HeadcountChart`: renders a figure titled "Headcount by department" with an `sr-only` list of each department and its count
 
 ## Slice 4: Pay per job title
 
 - **Backend:** `byJobTitle`, highest median first.
 - **Frontend:** a third `PayTable`.
 - **Test list:**
-  - [ ] unit `summarize`: `byJobTitle` ordered by median
+  - [x] unit `summarize`: `byJobTitle` ordered by median
 
 ## Slice 5: Salary distribution and hiring
 
