@@ -1,0 +1,21 @@
+services:
+  api:
+    build: { context: ., dockerfile: packages/server/Dockerfile }
+    env_file: .env
+    expose: ["3000"]
+    volumes:
+      - data:/app/data # SQLite file survives restarts
+    restart: unless-stopped
+    logging: &logging
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+
+  web:
+    build: { context: ., dockerfile: packages/web/Dockerfile }
+    ports: ["3000:80"]
+    depends_on: [api]
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  data:

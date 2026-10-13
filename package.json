@@ -1,0 +1,22 @@
+{
+  "name": "smt",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.3",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "bun run --filter '@smt/server' --filter '@smt/web' dev",
+    "build": "bun run --filter '@smt/web' build",
+    "test": "bun run --filter '*' test",
+    "lint": "eslint .",
+    "typecheck": "bun run --filter '*' typecheck",
+    "check": "bun run lint && bun run typecheck && bun run test && bun run build && bun audit --audit-level=high"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.3",
+    "eslint": "10.12.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@smt/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot dev-server.ts",
+    "build": "bun build.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "21.0.1",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "bun-plugin-tailwind": "0.1.2",
+    "tailwindcss": "4.3.3"
+  }
+}
