@@ -114,10 +114,10 @@ The seed is part of Slice 1: it's the only way rows get into the database until 
 - `bunx shadcn add select` → `components/ui/select.tsx`, with the focus ring removed per frontend.md.
 - **Libraries added:** `@radix-ui/react-select` (shadcn `Select`'s peer; on frontend.md's allowed list).
 - **Test list:**
-  - [ ] integration `employees.routes`: `country=IN` → only IN, filtered `total` · department / jobTitle exact match · combined filters · unknown value → 200 `[]` · filters endpoint returns sorted distinct values · filters endpoint without cookie → 401
-  - [ ] integration `employees.repository`: `EXPLAIN QUERY PLAN` for each single filter has no `SCAN employees`
-  - [ ] component `EmployeeFilters`: selecting a country calls `onChange` with it · "All" clears it
-  - [ ] component `EmployeesPage`: changing a filter resets to page 1 · URL filters are applied on load · empty state + Clear filters
+  - [x] integration `employees.routes`: `country=IN` → only IN, filtered `total` · department / jobTitle exact match · combined filters · unknown value → 200 `[]` · filters endpoint returns sorted distinct values · filters endpoint without cookie → 401
+  - [x] integration `employees.repository`: `EXPLAIN QUERY PLAN` for each single filter has no `SCAN employees`
+  - [x] component `EmployeeFilters`: selecting a country calls `onChange` with it · "All" clears it
+  - [x] component `EmployeesPage`: changing a filter resets to page 1 · URL filters are applied on load · empty state + Clear filters
 - **Quality checks:** filter values only ever bound as parameters
 
 ## Slice 4: Name search

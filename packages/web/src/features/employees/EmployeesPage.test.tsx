@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import type { Employee, Page } from "@smt/shared/api-types";
+import type { Employee, EmployeeFilterOptions, Page } from "@smt/shared/api-types";
 import { ApiError } from "@/lib/api";
 
 const priya: Employee = {
@@ -19,7 +19,10 @@ const priya: Employee = {
 const page = (items: Employee[]): Page<Employee> => ({ items, total: items.length, page: 1, pageSize: 50 });
 
 const listEmployees = mock<(params: URLSearchParams) => Promise<Page<Employee>>>(() => Promise.resolve(page([priya])));
-void mock.module("./employees.api", () => ({ listEmployees }));
+const getFilterOptions = mock<() => Promise<EmployeeFilterOptions>>(() =>
+  Promise.resolve({ countries: ["DE", "IN"], departments: ["Engineering"], jobTitles: ["Software Engineer"] }),
+);
+void mock.module("./employees.api", () => ({ listEmployees, getFilterOptions }));
 const { EmployeesPage } = await import("./EmployeesPage");
 
 const requestedPages = () => listEmployees.mock.calls.map(([params]) => params.get("page"));
@@ -92,5 +95,44 @@ describe("EmployeesPage", () => {
 
     await screen.findByRole("row", { name: /E00001/ });
     expect(requestedPages()).toEqual(["3"]);
+  });
+
+  it("filters by the chosen country, back on page 1, with the filter in the URL", async () => {
+    window.history.replaceState(null, "", "/?page=3");
+    render(<EmployeesPage />);
+
+    fireEvent.keyDown(await screen.findByRole("combobox", { name: "Country" }), { key: "Enter" });
+    fireEvent.click(await screen.findByRole("option", { name: "India" }));
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("?country=IN");
+    });
+    const last = listEmployees.mock.calls.at(-1)?.[0];
+    expect(last?.get("country")).toBe("IN");
+    expect(last?.get("page")).toBeNull();
+  });
+
+  it("applies the filters in the URL on load, so a shared link shows the same list", async () => {
+    window.history.replaceState(null, "", "/?department=Engineering");
+
+    render(<EmployeesPage />);
+
+    await screen.findByRole("row", { name: /E00001/ });
+    expect(listEmployees.mock.calls[0]?.[0].get("department")).toBe("Engineering");
+    expect(screen.getByRole("combobox", { name: "Department" }).textContent).toBe("Engineering");
+  });
+
+  it("says when nothing matches and clears the filters on request", async () => {
+    window.history.replaceState(null, "", "/?country=DE&jobTitle=Software+Engineer");
+    listEmployees.mockImplementationOnce(() => Promise.resolve(page([])));
+    render(<EmployeesPage />);
+
+    expect(await screen.findByText("No employees match these filters.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    await waitFor(() => {
+      expect(window.location.search).toBe("");
+    });
+    await screen.findByRole("row", { name: /E00001/ });
   });
 });

@@ -5,7 +5,7 @@ import type { Config } from "../config";
 import { error, json } from "../http/responses";
 import { withAuth } from "../http/with-auth";
 import { EMPLOYEE_MESSAGES } from "./employees.constants";
-import { listEmployees } from "./employees.repository";
+import { listEmployees, listFilterOptions } from "./employees.repository";
 import { validateListQuery } from "./validate-list-query";
 
 export function employeeRoutes(db: Database, config: Config, now: () => Date) {
@@ -16,6 +16,9 @@ export function employeeRoutes(db: Database, config: Config, now: () => Date) {
         if (!query.ok) return error(400, ERROR_CODES.validation, EMPLOYEE_MESSAGES.invalidListQuery, query.errors);
         return json(listEmployees(db, query.value));
       }),
+    },
+    [API_ROUTES.employeeFilters]: {
+      GET: withAuth(config, now, () => json(listFilterOptions(db))),
     },
   };
 }

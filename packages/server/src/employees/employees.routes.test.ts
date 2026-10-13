@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import type { Employee, Page } from "@smt/shared/api-types";
+import type { Employee, EmployeeFilterOptions, Page } from "@smt/shared/api-types";
 import { generateEmployees } from "../seed/generate-employees";
 import { startTestServer } from "../test-support/test-server";
 import { replaceAllEmployees } from "./employees.repository";
@@ -66,10 +66,66 @@ describe("GET /api/employees", () => {
     });
   });
 
+  it("filters by country, counting only the matches in the total", async () => {
+    const body = (await (await getEmployees("?country=IN&pageSize=100")).json()) as Page<Employee>;
+
+    const expected = stored.filter((e) => e.country === "IN");
+    expect(expected.length).toBeGreaterThan(0);
+    expect(body.total).toBe(expected.length);
+    expect(body.items).toEqual(expected.sort(byName));
+  });
+
+  it.each([
+    ["department", "Engineering", (e: Employee) => e.department === "Engineering"],
+    ["jobTitle", "Data Analyst", (e: Employee) => e.jobTitle === "Data Analyst"],
+  ] as const)("filters by %s with an exact match", async (filter, value, matches) => {
+    const body = (await (
+      await getEmployees(`?${filter}=${encodeURIComponent(value)}&pageSize=100`)
+    ).json()) as Page<Employee>;
+
+    expect(body.items).toEqual(stored.filter(matches).sort(byName));
+  });
+
+  it("combines filters", async () => {
+    const body = (await (
+      await getEmployees("?country=IN&department=Engineering&pageSize=100")
+    ).json()) as Page<Employee>;
+
+    expect(body.items).toEqual(stored.filter((e) => e.country === "IN" && e.department === "Engineering").sort(byName));
+  });
+
+  it("returns an empty list, not an error, for an unknown filter value", async () => {
+    const res = await getEmployees("?country=ZZ");
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ items: [], total: 0, page: 1, pageSize: 50 });
+  });
+
   it("returns 401 without a session", async () => {
     const res = await getEmployees("", "");
 
     expect(res.status).toBe(401);
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe("unauthenticated");
+  });
+});
+
+describe("GET /api/employees/filters", () => {
+  const distinctSorted = (values: string[]) => [...new Set(values)].sort();
+
+  it("returns the distinct countries, departments, and job titles, each sorted", async () => {
+    const res = await fetch(`${server.url}/api/employees/filters`, { headers: { Cookie: server.loginCookie } });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()) as EmployeeFilterOptions).toEqual({
+      countries: distinctSorted(stored.map((e) => e.country)),
+      departments: distinctSorted(stored.map((e) => e.department)),
+      jobTitles: distinctSorted(stored.map((e) => e.jobTitle)),
+    });
+  });
+
+  it("returns 401 without a session", async () => {
+    const res = await fetch(`${server.url}/api/employees/filters`);
+
+    expect(res.status).toBe(401);
   });
 });

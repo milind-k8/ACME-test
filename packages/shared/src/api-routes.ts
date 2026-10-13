@@ -4,4 +4,5 @@ export const API_ROUTES = {
   logout: "/api/logout",
   me: "/api/me",
   employees: "/api/employees",
+  employeeFilters: "/api/employees/filters",
 } as const;

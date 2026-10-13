@@ -31,16 +31,16 @@ The HR manager sees all employees in a paged table and finds people by name, cou
 - [x] The current page is kept in the URL, so reloading shows the same page
 
 ## Slice 3: Filters
-- [ ] `?country=IN` returns only employees in India, with `total` counting only them
-- [ ] `?department=` and `?jobTitle=` each filter to exact matches
-- [ ] Filters combine: `?country=IN&jobTitle=Software Engineer` returns only employees matching both
-- [ ] An unknown filter value returns `200` with an empty list, not an error
-- [ ] `GET /api/employees/filters` returns the distinct countries, departments, and job titles, each sorted alphabetically
-- [ ] The page has a select for country, department, and job title, filled from that endpoint
-- [ ] Changing a filter goes back to page 1
-- [ ] Filters are kept in the URL, so reloading or sharing the link shows the same list
-- [ ] When no employee matches, the page shows "No employees match these filters." with a "Clear filters" action
-- [ ] Filtering by country, by department, and by job title each use an index (no `SCAN employees` in the query plan)
+- [x] `?country=IN` returns only employees in India, with `total` counting only them
+- [x] `?department=` and `?jobTitle=` each filter to exact matches
+- [x] Filters combine: `?country=IN&jobTitle=Software Engineer` returns only employees matching both
+- [x] An unknown filter value returns `200` with an empty list, not an error
+- [x] `GET /api/employees/filters` returns the distinct countries, departments, and job titles, each sorted alphabetically
+- [x] The page has a select for country, department, and job title, filled from that endpoint
+- [x] Changing a filter goes back to page 1
+- [x] Filters are kept in the URL, so reloading or sharing the link shows the same list
+- [x] When no employee matches, the page shows "No employees match these filters." with a "Clear filters" action
+- [x] Filtering by country, by department, and by job title each use an index (no `SCAN employees` in the query plan)
 
 ## Slice 4: Name search
 - [ ] `?q=krishna` returns employees whose first or last name starts with "krishna"

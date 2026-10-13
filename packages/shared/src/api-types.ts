@@ -41,3 +41,9 @@ export interface Page<T> {
   page: number;
   pageSize: number;
 }
+
+export interface EmployeeFilterOptions {
+  countries: string[];
+  departments: string[];
+  jobTitles: string[];
+}

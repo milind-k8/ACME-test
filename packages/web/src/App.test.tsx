@@ -7,10 +7,23 @@ const login = mock<(request: LoginRequest) => Promise<SessionUser>>(() => Promis
 const getMe = mock<() => Promise<SessionUser>>();
 const logout = mock<() => Promise<void>>(() => Promise.resolve());
 void mock.module("./features/auth/auth.api", () => ({ login, getMe, logout }));
+const employee: Employee = {
+  id: 1,
+  employeeNumber: "E00001",
+  firstName: "Priya",
+  lastName: "Sharma",
+  jobTitle: "Software Engineer",
+  department: "Engineering",
+  country: "IN",
+  salaryMinor: 300_000_000,
+  currency: "INR",
+  hiredAt: "2020-01-15",
+};
 const listEmployees = mock<() => Promise<Page<Employee>>>(() =>
-  Promise.resolve({ items: [], total: 0, page: 1, pageSize: 50 }),
+  Promise.resolve({ items: [employee], total: 1, page: 1, pageSize: 50 }),
 );
-void mock.module("./features/employees/employees.api", () => ({ listEmployees }));
+const getFilterOptions = mock(() => Promise.resolve({ countries: [], departments: [], jobTitles: [] }));
+void mock.module("./features/employees/employees.api", () => ({ listEmployees, getFilterOptions }));
 const { App } = await import("./App");
 
 const notLoggedIn = () => Promise.reject(new ApiError(401, "unauthenticated", "Please log in"));

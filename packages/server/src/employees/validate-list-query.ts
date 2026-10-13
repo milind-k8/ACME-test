@@ -1,6 +1,9 @@
 import { DEFAULT_PAGE_SIZE, EMPLOYEE_MESSAGES, MAX_PAGE_SIZE } from "./employees.constants";
 
-export interface EmployeeListQuery {
+export const EMPLOYEE_FILTERS = ["country", "department", "jobTitle"] as const;
+export type EmployeeFilter = (typeof EMPLOYEE_FILTERS)[number];
+
+export interface EmployeeListQuery extends Partial<Record<EmployeeFilter, string>> {
   page: number;
   pageSize: number;
 }
@@ -24,5 +27,12 @@ export function validateListQuery(params: URLSearchParams): ListQueryValidation 
   if (page === null) errors.page = EMPLOYEE_MESSAGES.page;
   if (pageSize === null) errors.pageSize = EMPLOYEE_MESSAGES.pageSize;
 
-  return page === null || pageSize === null ? { ok: false, errors } : { ok: true, value: { page, pageSize } };
+  if (page === null || pageSize === null) return { ok: false, errors };
+
+  const value: EmployeeListQuery = { page, pageSize };
+  for (const filter of EMPLOYEE_FILTERS) {
+    const raw = params.get(filter)?.trim();
+    if (raw) value[filter] = raw;
+  }
+  return { ok: true, value };
 }
