@@ -7,7 +7,7 @@ A web app for ACME's HR manager to manage salaries for about 10,000 employees ac
 **Docker** (no Bun needed):
 
 ```sh
-cp .env.example .env      # then set JWT_SECRET
+cp .env.example .env      # then set JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
 docker compose up --build # http://localhost:3000
 ```
 

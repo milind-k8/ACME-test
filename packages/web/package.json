@@ -9,8 +9,14 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
+    "@radix-ui/react-label": "2.1.17",
+    "@radix-ui/react-slot": "1.5.0",
+    "@smt/shared": "workspace:*",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "tailwind-merge": "3.7.0"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "21.0.1",

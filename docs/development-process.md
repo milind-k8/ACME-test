@@ -63,7 +63,14 @@ Tooling enforces formatting and obvious mistakes: TypeScript strict mode, ESLint
 
 ## Cross-cutting conventions
 
-- **`packages/shared/` (`@smt/shared`)** is pure code used by both sides (no Bun APIs, no DOM): `api-types.ts` (the API contract, one source of truth) and `money.ts` (`toMinor` / `fromMinor` / `formatMoney`). **Server and web never import each other; they only meet through `shared/`.** If the API changes, the types change and TypeScript flags every caller.
+- **`packages/shared/` (`@smt/shared`)** is pure code used by both sides (no Bun APIs, no DOM): `api-types.ts` (the API contract, one source of truth), `api-routes.ts` (`API_ROUTES`, every API path), `error-codes.ts` (`ERROR_CODES` + `ErrorCode`), and `money.ts` (`toMinor` / `fromMinor` / `formatMoney`). **Server and web never import each other; they only meet through `shared/`.** If the API changes, the types change and TypeScript flags every caller.
+- **No magic values in logic files.** Strings and numbers with meaning live in a dedicated file, and logic imports them:
+  - Used by both server and web (API paths, error codes) → `shared/`.
+  - Used by one feature → `<feature>/<feature>.constants.ts` (e.g. `auth/auth.constants.ts`); used across a package → its `http/http.constants.ts` or `lib/*.constants.ts`.
+  - External URLs (images, docs, third-party links) → web `lib/links.ts` (`LINKS`).
+  - Icons and brand marks → web `components/icons/` and `components/LogoMark.tsx`; static files (images, fonts) → web `src/assets/`.
+  - **Enums are `as const` objects plus a derived union type** (`type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]`), not TypeScript `enum`. They're plain JavaScript, so nothing extra is emitted.
+  - Tests keep literal values: they check the contract, so a renamed constant can't silently change it.
 - **Money**: integer minor units plus an ISO 4217 currency code. Never a float for a stored amount. Reports convert to USD through the `fx_rates` table, and every USD figure shows the rate date. ([ADR-002](adrs/002-salary-currency-and-usd-reporting.md))
 - **Error shape**: every error response is `{ error: { code, message, details? } }`. `400` validation (with `details` mapping each field to a message, e.g. `{ salary: "must be greater than 0" }`), `401` unauthenticated, `404` not found, `500` unexpected (logged, generic message).
 - **Dates**: stored as ISO strings, shown in the user's locale.

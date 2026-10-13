@@ -48,9 +48,9 @@ How the app is configured, built, run, and deployed. Read [development-process.m
 
 | Variable | Notes |
 |----------|-------|
-| `JWT_SECRET` | Required; the server refuses to start in production without it |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Seed the single HR account |
-| `DATABASE_PATH` | SQLite file path (`/app/data/…` in containers) |
+| `JWT_SECRET` | Required in every environment; the server refuses to start without it |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Required. The single demo HR account, reset to these values on every start |
+| `DATABASE_PATH` | SQLite file path. Defaults to `smt.db`; Compose sets `/app/data/smt.db` |
 | `PORT` | Defaults to 3000 |
 | `SENTRY_DSN` | Server error reporting. Set in production only; unset means Sentry is off |
 | `BUN_PUBLIC_SENTRY_DSN` | Browser error reporting, inlined into the bundle at build time. Production only |
@@ -105,7 +105,7 @@ Infrastructure is mostly config, which is exempt from test-first. Verify instead
 - `docker compose up` on a clean checkout serves the login page and the seeded data.
 - After each deploy: the domain loads over HTTPS and login works (the `Secure` cookie is set).
 - A backup restores into a working app (checked once, then after any backup change).
-- The production server exits with a clear error when `JWT_SECRET` is missing (this one has a unit test on `config.ts`).
+- The server exits with a clear error when `JWT_SECRET`, `ADMIN_EMAIL`, or `ADMIN_PASSWORD` is missing (this one has a unit test on `config.ts`).
 
 ---
 - [x] Reviewed

@@ -1,0 +1,9 @@
+{
+  "name": "@smt/shared",
+  "private": true,
+  "type": "module",
+  "exports": { "./*": "./src/*.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

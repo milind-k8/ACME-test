@@ -45,18 +45,18 @@ This is the first feature, so Slice 1 is also the walking skeleton for the whole
   - web: shadcn's peers for the four components: `@radix-ui/react-slot`, `@radix-ui/react-label`, `class-variance-authority`, `clsx`, `tailwind-merge`. All are already on frontend.md's allowed list.
   - shared: none
 - **Test list:**
-  - [ ] unit `config`: throws when `JWT_SECRET`, `ADMIN_EMAIL`, or `ADMIN_PASSWORD` is missing, in any `NODE_ENV` (this replaces the production-only test; the port tests get a full env) · `databasePath` defaults to `smt.db`
-  - [ ] unit `validate-login`: missing email → error · missing password → error · non-string values → error · email trimmed and lowercased
-  - [ ] unit `token`: a signed token decodes with the email and an `exp` 8h after `now`
-  - [ ] integration `migrate`: applies `001` once, and a second run is a no-op
-  - [ ] integration `connection`: `sqlite_version() >= 3.37`, FTS5 available, `foreign_keys` on (the walking-skeleton checks from backend.md)
-  - [ ] integration `users.repository`: upsert inserts, then upsert updates the hash · a non-lowercase email is rejected by the `CHECK`
-  - [ ] integration `admin`: the stored hash starts with `$argon2id$` and verifies against the password · `" HR@Acme.test "` is stored as `hr@acme.test` · a second run with a new password replaces the hash
-  - [ ] integration `auth.routes`: correct credentials → 200 `{ email }` · cookie flags and `Max-Age=28800` · `" HR@Acme.test "` logs in · wrong password → 401 and no `Set-Cookie` · unknown email → identical 401 body · bad body → 400 with `details`
-  - [ ] integration `responses`: a throwing route → 500 with a generic message and no stack trace
-  - [ ] unit `lib/api`: a non-2xx `{ error }` body → `ApiError` with status, code, and details (stub `fetch`)
-  - [ ] component `LoginPage`: submit calls `login` with the typed values · 401 shows the message and keeps the email · button disabled while pending
-  - [ ] component `App`: a successful login shows the shell with the email (replaces the current title test)
+  - [x] unit `config`: throws when `JWT_SECRET`, `ADMIN_EMAIL`, or `ADMIN_PASSWORD` is missing, in any `NODE_ENV` (this replaces the production-only test; the port tests get a full env) · `databasePath` defaults to `smt.db`
+  - [x] unit `validate-login`: missing email → error · missing password → error · non-string values → error · email trimmed and lowercased
+  - [x] unit `token`: a signed token decodes with the email and an `exp` 8h after `now`
+  - [x] integration `migrate`: applies `001` once, and a second run is a no-op
+  - [x] integration `connection`: `sqlite_version() >= 3.37`, FTS5 available, `foreign_keys` on (the walking-skeleton checks from backend.md)
+  - [x] integration `users.repository`: upsert inserts, then upsert updates the hash · a non-lowercase email is rejected by the `CHECK`
+  - [x] integration `admin`: the stored hash starts with `$argon2id$` and verifies against the password · `" HR@Acme.test "` is stored as `hr@acme.test` · a second run with a new password replaces the hash
+  - [x] integration `auth.routes`: correct credentials → 200 `{ email }` · cookie flags and `Max-Age=28800` · `" HR@Acme.test "` logs in · wrong password → 401 and no `Set-Cookie` · unknown email → identical 401 body · bad body → 400 with `details`
+  - [x] integration `responses`: a throwing route → 500 with a generic message and no stack trace
+  - [x] unit `lib/api`: a non-2xx `{ error }` body → `ApiError` with status, code, and details (stub `fetch`)
+  - [x] component `LoginPage`: submit calls `login` with the typed values · 401 shows the message and keeps the email · button disabled while pending
+  - [x] component `App`: a successful login shows the shell with the email (replaces the current title test)
 - **Quality checks:** routes contain no SQL · password never logged or returned · `token.ts` and `validate-login.ts` have no I/O · `users` is `STRICT`
 
 ## Slice 2: The session protects the API
@@ -73,9 +73,9 @@ This is the first feature, so Slice 1 is also the walking skeleton for the whole
   - `App.tsx`: render `Skeleton` while loading
 - **Libraries added:** shadcn `Skeleton` (no new dependency)
 - **Test list:**
-  - [ ] unit `token`: tampered payload → null · different secret → null · `alg: none` → null · `alg: HS512` → null · `now` = exp + 1s → null · garbage string → null
-  - [ ] integration `auth.routes`: `/me` with `loginCookie` → 200 `{ email }` · no cookie → 401 · expired (test server `now` advanced 8h) → 401
-  - [ ] component `App`: `getMe` resolves → shell shown · `getMe` rejects 401 → login form · loading → skeleton
+  - [x] unit `token`: tampered payload → null · different secret → null · `alg: none` → null · `alg: HS512` → null · `now` = exp + 1s → null · garbage string → null
+  - [x] integration `auth.routes`: `/me` with `loginCookie` → 200 `{ email }` · no cookie → 401 · expired (test server `now` advanced 8h) → 401
+  - [x] component `App`: `getMe` resolves → shell shown · `getMe` rejects 401 → login form · loading → skeleton
 - **Quality checks:** the algorithm is pinned in verify · `withAuth` holds the only token check · no DB lookup per request
 
 ## Slice 3: HR can log out
@@ -90,9 +90,9 @@ This is the first feature, so Slice 1 is also the walking skeleton for the whole
   - `AppShell`: a "Log out" button in the header
 - **Libraries added:** none
 - **Test list:**
-  - [ ] integration `auth.routes`: logout → 204 and `Set-Cookie` with `Max-Age=0`
-  - [ ] unit `lib/api`: a 401 notifies listeners · a 401 from `/api/login` doesn't
-  - [ ] component `App`: clicking Log out → login form · an `onUnauthorized` event → login form
+  - [x] integration `auth.routes`: logout → 204 and `Set-Cookie` with `Max-Age=0`
+  - [x] unit `lib/api`: a 401 notifies listeners · a 401 from `/api/login` doesn't
+  - [x] component `App`: clicking Log out → login form · an `onUnauthorized` event → login form
 - **Quality checks:** no token kept in JS-readable storage
 
 ## Decisions
@@ -103,10 +103,54 @@ This is the first feature, so Slice 1 is also the walking skeleton for the whole
 - **Secrets:** you set `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in `.env` (dev and Compose) and in the deploy environment. The server refuses to start without them.
 
 ## Open questions
-1. **Test speed:** argon2id hashing at each `startTestServer` may add tens of ms per suite. If it does, I'd hash once per test file, without lowering the cost in production code.
+1. ~~**Test speed:**~~ Resolved: one argon2id hash takes about 120 ms, so `test-server.ts` hashes the admin password once per test process. The production cost is unchanged.
 
 ## As built
-_Filled in after the build._
+
+Built on branch `feat/login` across all three slices. `bun run check` passes with 60 server and 16 web tests, a production build, and no vulnerabilities.
+
+**Files**
+- shared: `packages/shared/` (new workspace package; `api-types.ts` with `ApiErrorBody`, `LoginRequest`, `SessionUser`)
+- server:
+  - `config.ts`
+  - `db/connection.ts`, `db/migrate.ts`, `db/migrations/001_users.sql`
+  - `http/responses.ts`, `http/with-auth.ts`
+  - `auth/validate-login.ts`, `auth/users.repository.ts`, `auth/admin.ts`, `auth/token.ts`, `auth/auth.routes.ts`
+  - `routes.ts`, `index.ts`, `test-support/test-server.ts`
+- web:
+  - `lib/api.ts`, `lib/utils.ts`
+  - `components/ui/{button,input,label,card,skeleton}.tsx`, `components/AppShell.tsx`
+  - `features/auth/{auth.api.ts,LoginPage.tsx,useSession.ts}`, `App.tsx`
+  - `index.css` (neutral theme, indigo `--primary`), `components.json`, the `@/*` path alias
+- wiring:
+  - Both Dockerfiles copy `packages/shared`.
+  - The `dev` script reads the root `.env`.
+  - Compose sets `DATABASE_PATH=/app/data/smt.db`, so `.env.example` no longer has it.
+  - `devops.md` and `README.md` env tables are updated.
+
+**Migrations:** `001_users.sql`, as planned.
+
+**Libraries:**
+- server: `jose` 6.2.12
+- web: `@radix-ui/react-slot` 1.5.0, `@radix-ui/react-label` 2.1.17, `class-variance-authority` 0.7.1, `clsx` 2.1.1, `tailwind-merge` 3.7.0
+- All are pinned exact.
+
+**Differences from the plan, and why**
+- **No `shadcn init`.** Its init is built around app templates and presets, so `components.json` was written by hand. `shadcn add` (4.21.4) twice imported `cn` from an unrelated npm package named `cn` and installed it, and it also used the all-in-one `radix-ui` package. Both times the dependency changes were reverted and the imports fixed to `@/lib/utils` and `@radix-ui/react-*`. Check the `cn` import after every `shadcn add`.
+- **Logout clears the cookie with `set("session", "", { ...same attributes, maxAge: 0 })`, not `cookies.delete`.** Bun's `delete` sends `SameSite=Lax` without `Secure` or `HttpOnly`, which doesn't match the cookie login sets. Logout is not behind `withAuth`, as planned.
+- **`api()` grew three behaviours the plan didn't list**, each test-driven:
+  - A non-JSON error body (a proxy 502 page) becomes `ApiError(status, "unknown")`.
+  - A network failure becomes `ApiError(0, "network")`.
+  - A `204` resolves to `undefined`.
+- **`api()` always sends `Content-Type: application/json` and ignores caller headers.** Merging `HeadersInit` safely wasn't needed (YAGNI).
+- **`useSession` treats any `ApiError` from `/api/me` as anonymous**, not only a 401. If the API is down, the login form shows, and submitting it shows "Can't reach the server".
+- **`AppShell` takes `{ user, onLogout }`, with no `children` yet.** There's no content until Employees.
+- **`startTestServer` is async** (it signs `loginCookie`) and exports `TEST_ADMIN` and `TEST_CONFIG`.
+- **Extra tests beyond the list:**
+  - `migrate`: multi-statement files, and rollback when a migration fails
+  - `verifyToken`: a token with no `email` claim
+  - `validateLogin`: a body that isn't an object
+- **Guard tests that passed on first run were mutation-checked.** The `users` CHECK, the `withAuth` 401s, and the `onUnauthorized` login exclusion and unsubscribe were each broken on purpose to confirm their tests fail.
 
 ---
 - [x] Reviewed
