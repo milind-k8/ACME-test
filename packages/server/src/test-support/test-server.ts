@@ -14,7 +14,6 @@ export const TEST_CONFIG: Config = {
   adminEmail: TEST_ADMIN.email,
   adminPassword: TEST_ADMIN.password,
   seedIfEmpty: false,
-  trustProxy: false,
 };
 
 // argon2id is slow on purpose (~100 ms), so hash once per test process instead of once per server.

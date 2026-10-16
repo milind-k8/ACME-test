@@ -1,18 +1,7 @@
-{
-	# A proxy in front of us on a private network (e.g. a hosting platform's HTTPS proxy) is trusted to report the
-	# real client in X-Forwarded-For; anything else in that header is ignored. {client_ip} is then the real client.
-	servers {
-		trusted_proxies static private_ranges
-	}
-}
-
 :80 {
 	encode
 	handle /api/* {
-		reverse_proxy api:3000 {
-			# The API's login rate limit keys on this (TRUST_PROXY=true). Set here, so a client can't choose it.
-			header_up X-Real-IP {client_ip}
-		}
+		reverse_proxy api:3000
 	}
 	handle {
 		root * /srv
