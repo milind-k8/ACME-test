@@ -8,7 +8,6 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
       DATABASE_PATH: /app/data/smt.db
       SEED_IF_EMPTY: "true" # demo only: seed 10,000 employees into a new, empty volume
-      TRUST_PROXY: "true" # Caddy is in front and sends the real client address as X-Real-IP
     expose: ["3000"]
     volumes:
       - data:/app/data # SQLite file survives restarts

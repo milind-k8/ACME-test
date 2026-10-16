@@ -1,4 +1,6 @@
 # Plan: Login rate limiting
+**Removed 2026-10-16** on branch `feat/remove-login-rate-limit`: the limiter, `client-address`, `TRUST_PROXY`, `too_many_attempts`, and Caddy's `X-Real-IP` header are gone.
+
 Spec: [06-login-rate-limit-spec.md](../specs/06-login-rate-limit-spec.md) · Decision: [ADR-003](../adrs/003-stateless-jwt-auth.md)
 
 ## Slice 1: Failed logins are limited per client

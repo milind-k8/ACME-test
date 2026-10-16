@@ -1,4 +1,6 @@
 # Spec: Login rate limiting
+**Removed 2026-10-16** at my request (see [ADR-003](../adrs/003-stateless-jwt-auth.md#consequences)). Kept for history.
+
 Risk: HIGH
 Requirement: [ADR-003 → Consequences](../adrs/003-stateless-jwt-auth.md#consequences) ("Before real data goes in, add a small in-memory limiter keyed by IP"), [requirements.md → Must have](../requirements.md#must-have-mvp) ("This is salary data, so it shouldn't be open to anyone with the URL")
 

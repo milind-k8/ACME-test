@@ -114,3 +114,10 @@ I used Claude Code as a pair partner throughout. This log records what I asked f
 - **I asked about live exchange rates** for a "real-time" app. The AI laid out the trade-off (salaries are annual; official rates publish daily; live numbers would shift between page loads) and proposed a daily European Central Bank refresh that the cache would pick up automatically. **I decided to keep the fixed snapshot for now.**
 - **Built test-first;** the same single query and pass as ADR-007.
 - **After the browser check** it hid the repeated line for USD rows ("$97,000" over "$97,000.00").
+
+## Login rate limit removed (2026-10-16)
+
+<!-- Draft by the AI for me to edit. -->
+
+- **Asked for:** remove the login rate limit.
+- **Removed with it:** everything that existed only for the limiter: `TRUST_PROXY`, the client-address helper, the `too_many_attempts` error code, and Caddy's `X-Real-IP` header and trusted-proxies block. ADR-003 now says login has no rate limit.

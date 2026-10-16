@@ -18,5 +18,5 @@ This is salary data, and it will be deployed at a public URL. The first draft le
 
 ## Consequences
 - Logout only clears the cookie. A stolen token stays valid until it expires (at most 8 hours). If that risk matters, add a denylist or short-lived access tokens with refresh tokens.
-- Login has no rate limit. Before real data goes in, add a small in-memory limiter keyed by IP.
+- Login has no rate limit. One was built ([spec 06](../specs/06-login-rate-limit-spec.md)) and removed on 2026-10-16 at my request; password guessing is limited only by argon2's cost per attempt.
 - `JWT_SECRET` is required, and the server refuses to start in production without it.

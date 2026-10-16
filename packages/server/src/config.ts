@@ -6,8 +6,6 @@ export interface Config {
   adminPassword: string;
   /** Seed the demo employees at startup when the table is empty. Off unless SEED_IF_EMPTY=true. */
   seedIfEmpty: boolean;
-  /** Read the client address from X-Forwarded-For; only true behind our own proxy (Compose). */
-  trustProxy: boolean;
 }
 
 type Env = Record<string, string | undefined>;
@@ -36,7 +34,6 @@ export function loadConfig(env: Env): Config {
     throw new Error("PORT must be an integer between 1 and 65535");
   }
   const seedIfEmpty = booleanFlag(env, "SEED_IF_EMPTY");
-  const trustProxy = booleanFlag(env, "TRUST_PROXY");
   return {
     port,
     databasePath: env.DATABASE_PATH ?? "smt.db",
@@ -44,6 +41,5 @@ export function loadConfig(env: Env): Config {
     adminEmail,
     adminPassword,
     seedIfEmpty,
-    trustProxy,
   };
 }
